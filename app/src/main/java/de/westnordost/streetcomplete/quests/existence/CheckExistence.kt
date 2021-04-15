@@ -10,6 +10,8 @@ import de.westnordost.streetcomplete.data.meta.SURVEY_MARK_KEY
 import de.westnordost.streetcomplete.data.meta.toCheckDateString
 import de.westnordost.streetcomplete.data.osm.changes.StringMapChangesBuilder
 import de.westnordost.streetcomplete.data.osm.osmquest.OsmElementQuestType
+import de.westnordost.streetcomplete.ktx.arrayOfNotNull
+import de.westnordost.streetcomplete.ktx.containsAnyKey
 import java.util.*
 import java.util.concurrent.FutureTask
 
@@ -23,6 +25,7 @@ class CheckExistence(
             amenity = atm
             or amenity = telephone
             or amenity = vending_machine and vending !~ fuel|parking_tickets|public_transport_tickets
+            or amenity = public_bookcase
             or birds_nest = stork
           )
           and (${lastChecked(2.0)})
@@ -32,16 +35,21 @@ class CheckExistence(
             or amenity = bench
             or amenity = waste_basket
             or amenity = post_box
+            or amenity = grit_bin
             or leisure = picnic_table
             or leisure = firepit
             or amenity = vending_machine and vending ~ parking_tickets|public_transport_tickets
             or tourism = information and information ~ board|terminal|map
             or advertising ~ column|board|poster_box
+            or traffic_calming ~ bump|hump|island|cushion|choker|rumble_strip|chicane|dip
+            or traffic_calming = table and !highway and !crossing
           )
           and (${lastChecked(4.0)})
         )) and access !~ no|private
     """.toElementFilterExpression()
     }
+    // traffic_calming = table is often used as a property of a crossing: we don't want the app
+    //    to delete the crossing if the table is not there anymore, so exclude that
     // postboxes are in 4 years category so that postbox collection times is asked instead more often
 
     private val nodesWaysFilter by lazy { """
@@ -59,15 +67,15 @@ class CheckExistence(
     override val wikiLink: String? = null
     override val icon = R.drawable.ic_quest_check
 
-    override fun getTitle(tags: Map<String, String>): Int {
-        val hasName = tags.containsKey("name")
-        return if(hasName) R.string.quest_existence_name_title else R.string.quest_existence_title
-    }
+    override fun getTitle(tags: Map<String, String>): Int =
+        if (tags.containsAnyKey("name", "brand", "operator"))
+            R.string.quest_existence_name_title
+        else
+            R.string.quest_existence_title
 
     override fun getTitleArgs(tags: Map<String, String>, featureName: Lazy<String?>): Array<String> {
-        val name = tags["name"] ?: tags["brand"]
-        val featureNameStr = featureName.value.toString()
-        return if (name != null) arrayOf(name, featureNameStr) else arrayOf(featureNameStr)
+        val name = tags["name"] ?: tags["brand"] ?: tags["operator"]
+        return arrayOfNotNull(name, featureName.value)
     }
 
     override fun getApplicableElements(mapData: MapDataWithGeometry): Iterable<Element> =
@@ -75,7 +83,7 @@ class CheckExistence(
 
     override fun isApplicableTo(element: Element) =
         (nodesFilter.matches(element) || nodesWaysFilter.matches(element))
-        && hasFeatureName(element.tags)
+        && hasAnyName(element.tags)
 
     override fun createForm() = CheckExistenceForm()
 
@@ -92,6 +100,6 @@ class CheckExistence(
         or ${LAST_CHECK_DATE_KEYS.joinToString(" or ") { "$it < today -$yearsAgo years" }}
     """.trimIndent()
 
-    private fun hasFeatureName(tags: Map<String, String>?): Boolean =
+    private fun hasAnyName(tags: Map<String, String>?): Boolean =
         tags?.let { featureDictionaryFuture.get().byTags(it).find().isNotEmpty() } ?: false
 }

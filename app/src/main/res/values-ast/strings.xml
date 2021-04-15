@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Fuzzy -->
     <string name="action_settings">"Preferencies"</string>
 
     <!-- Fuzzy -->
@@ -169,7 +167,7 @@
     <string name="about_title_authors">"Creitos"</string>
 
     <!-- Fuzzy -->
-    <string name="about_summary_authors">"© 2016–2020 Tobias Zwick y demás collaboradores"</string>
+    <string name="about_summary_authors">"© 2016–2021 Tobias Zwick y demás collaboradores"</string>
 
     <!-- Fuzzy -->
     <string name="about_title_repository">"Depósitu de códigu"</string>

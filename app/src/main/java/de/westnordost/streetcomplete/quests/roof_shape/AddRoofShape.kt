@@ -13,6 +13,7 @@ class AddRoofShape(private val countryInfos: CountryInfos) : OsmElementQuestType
     private val filter by lazy { """
         ways, relations with (building:levels or roof:levels)
           and !roof:shape and !3dr:type and !3dr:roof
+          and building and building!=no and building!=construction
     """.toElementFilterExpression() }
 
     override val commitMessage = "Add roof shapes"
@@ -28,20 +29,31 @@ class AddRoofShape(private val countryInfos: CountryInfos) : OsmElementQuestType
     }
 
     override fun getApplicableElements(mapData: MapDataWithGeometry) =
-        mapData.filter {
-            filter.matches(it) && (
-                it.tags?.get("roof:levels") ?: "0" != "0"
-                || roofsAreUsuallyFlatAt(it, mapData) == false
+        mapData.filter { element ->
+            filter.matches(element)
+            && isRoofProbablyVisibleFromBelow(element.tags) != false
+            && (
+                element.tags?.get("roof:levels")?.toFloatOrNull() ?: 0f > 0f
+                || roofsAreUsuallyFlatAt(element, mapData) == false
             )
         }
 
     override fun isApplicableTo(element: Element): Boolean? {
         if (!filter.matches(element)) return false
-        // if it has 0 roof levels, or the roof levels aren't specified,
-        // the quest should only be shown in certain countries. But whether
-        // the element is in a certain country cannot be ascertained at this point
-        if (element.tags?.get("roof:levels") ?: "0" == "0") return null
+        if (isRoofProbablyVisibleFromBelow(element.tags) == false) return false
+        /* if it has 0 roof levels, or the roof levels aren't specified,
+           the quest should only be shown in certain countries. But whether
+           the element is in a certain country cannot be ascertained at this point */
+        if (element.tags?.get("roof:levels")?.toFloatOrNull() ?: 0f == 0f) return null
         return true
+    }
+
+    private fun isRoofProbablyVisibleFromBelow(tags: Map<String,String>?): Boolean? {
+        if (tags == null) return null
+        val roofLevels = tags["roof:levels"]?.toFloatOrNull() ?: 0f
+        val buildingLevels = tags["building:levels"]?.toFloatOrNull() ?: return null
+        if (roofLevels < 0f || buildingLevels < 0f) return null
+        return buildingLevels / (roofLevels + 2f) < 2f
     }
 
     private fun roofsAreUsuallyFlatAt(element: Element, mapData: MapDataWithGeometry): Boolean? {

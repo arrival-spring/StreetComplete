@@ -147,7 +147,7 @@
     <string name="about_title_authors">"Autorzy"</string>
 
     <!-- Fuzzy -->
-    <string name="about_summary_authors">"© 2016–2020 Tobias Zwick i współautorzy"</string>
+    <string name="about_summary_authors">"© 2016–2021 Tobias Zwick i współautorzy"</string>
 
     <!-- Fuzzy -->
     <string name="about_title_repository">"Repozytorium kodu źródłowego"</string>
@@ -551,25 +551,25 @@ Jeśli na całej ulicy nie ma znaków dotyczących podświetlonej sekcji, obowi�
     <string name="quest_wheelchairAccess_bus_station_title">"Czy ten przystanek jest dostępny dla osób na wózku?"</string>
 
     <!-- Fuzzy -->
-    <string name="quest_wheelchairAccess_subway_entrance_title">"Czy to zejście do metra jest dostępne dla osób na wózku?"</string>
+    <string name="quest_wheelchairAccess_subway_entrance_title">"Czy to zejście do metra jest dostępne dla osób na wózku inwalidzkim?"</string>
 
     <!-- Fuzzy -->
     <string name="quest_wheelchairAccess_railway_station_title">"Czy ten przystanek kolejowy jest dostępny dla osób na wózku?"</string>
 
     <!-- Fuzzy -->
-    <string name="quest_wheelchairAccess_location_title">"Czy to miejsce jest dostępne dla osób na wózku?"</string>
+    <string name="quest_wheelchairAccess_location_title">"Czy to miejsce jest dostępne dla osób na wózku inwalidzkim?"</string>
 
     <!-- Fuzzy -->
     <string name="quest_wheelchairAccess_bus_station_name_title">"Czy przystanek %s jest dostępny dla osób na wózku?"</string>
 
     <!-- Fuzzy -->
-    <string name="quest_wheelchairAccess_subway_entrance_name_title">"Czy zejście do metra %s jest dostępne dla osób na wózku?"</string>
+    <string name="quest_wheelchairAccess_subway_entrance_name_title">"Czy zejście do metra %s jest dostępne dla osób na wózku inwalidzkim?"</string>
 
     <!-- Fuzzy -->
     <string name="quest_wheelchairAccess_railway_station_name_title">"Czy przystanek kolejowy %s jest dostępny dla osób na wózku?"</string>
 
     <!-- Fuzzy -->
-    <string name="quest_wheelchairAccess_location_name_title">"Czy miejsce %s jest dostępne dla osób na wózku?"</string>
+    <string name="quest_wheelchairAccess_location_name_title">"Czy miejsce %s jest dostępne dla osób na wózku inwalidzkim?"</string>
 
     <!-- Fuzzy -->
     <string name="quest_wheelchairAccess_limited_description_business">"Częściowo oznacza, że trzeba pokonać co najwyżej jeden stopień, aby wejść i większość pomieszczeń w środku jest dostępna dla osób na wózku."</string>
@@ -1031,7 +1031,7 @@ Oznacza to, że osoba na wózku jest w stanie z niej skorzystać, ale nie ma por
     <string name="pref_title_quests_invalidation">"Wyczyść pobrane zadania"</string>
 
     <!-- Fuzzy -->
-    <string name="pref_title_quests_invalidation_summary">"Przydatne gdy zadania się nie są aktualne"</string>
+    <string name="pref_title_quests_invalidation_summary">"Przydatne gdy zadania nie są aktualne"</string>
 
     <!-- Fuzzy -->
     <string name="invalidate_confirmation">"Wyczyść cache"</string>
@@ -1280,13 +1280,13 @@ Na przykład 1,3 lub 2-6."</string>
     <string name="quest_buildingType_detached">"Wolnostojący dom jednorodzinny"</string>
 
     <!-- Fuzzy -->
-    <string name="quest_buildingType_detached_description">"wolnostojący dom jednorodzinny"</string>
+    <string name="quest_buildingType_detached_description">"dom jednorodzinny niepołączony z innym domem"</string>
 
     <!-- Fuzzy -->
-    <string name="quest_buildingType_semi_detached">"Bliźniak"</string>
+    <string name="quest_buildingType_semi_detached">"Dom-bliźniak"</string>
 
     <!-- Fuzzy -->
-    <string name="quest_buildingType_semi_detached_description">"dom bliźniak"</string>
+    <string name="quest_buildingType_semi_detached_description">"dom połączony jedną ścianą do innego domu"</string>
 
     <!-- Fuzzy -->
     <string name="quest_buildingType_terrace_description">"rząd podobnych budynków jednorodzinnych"</string>
@@ -1555,7 +1555,7 @@ Na przykład 1,3 lub 2-6."</string>
     <string name="quest_wheelchairAccess_limited_description_outside">"Częściowo oznacza, że nie ma więcej niż jednego stopnia prowadzącego do obiektu."</string>
 
     <!-- Fuzzy -->
-    <string name="quest_wheelchairAccess_outside_title">"Czy to miejsce jest dostępne dla osób na wózkach inwalidzkich?"</string>
+    <string name="quest_wheelchairAccess_outside_title">"Czy to miejsce jest dostępne dla osób na wózku inwalidzkich?"</string>
     <string name="quest_traffic_signals_button_title">"Czy te sygnalizatory mają przycisk żądający zielonego światła?"</string>
 
     <!-- Fuzzy -->
@@ -2208,7 +2208,9 @@ Pamiętaj, że ta aplikacja pyta o numer budynku tylko po tym, jak zostanie okre
     <string name="achievement_outdoors_title">"Na zewnątrz"</string>
     <string name="achievement_outdoors_solved_X">"Rozwiązałeś %d zadań przydatnych ludziom na zewnątrz!"</string>
     <string name="quest_pedestrian_crossing_island">"Czy te przejście dla pieszych ma wysepkę?"</string>
-    <string name="quest_generic_answer_noSign">"Nie ma tabliczki z nazwą"</string>
+
+    <!-- Ten ciąg pojawia się w różnych zadaniach, więc tłumaczenie nie może odnosić się do któregokolwiek z nich np. znaku z nazwą lub maksymalnym tonażem -->
+    <string name="quest_generic_answer_noSign">"Nie ma znaku"</string>
     <string name="quest_steps_ramp_separate_wheelchair">"Czy rampa dla wóżków inwalidzkich jest wyświetlana jako osobna linia na mapie?"</string>
     <string name="quest_steps_ramp_separate_wheelchair_confirm">"osobno"</string>
     <string name="quest_steps_ramp_separate_wheelchair_decline">"nie jest pokazana osobno"</string>
@@ -2278,4 +2280,31 @@ Jeśli jakieś pasy są zarezerwowane dla autobusów, zostaw wiadomość."</stri
     <string name="quest_surface_value_clay">"Glina"</string>
     <string name="quest_surface_value_artificial_turf">"Sztuczna trawa"</string>
     <string name="quest_surface_value_tartan">"Tartan"</string>
+    <string name="quest_pitchSurface_title_track">"Jaką nawierzchnię ma ta droga rekreacyjna?"</string>
+    <string name="quest_bicycle_parking_access_title">"Czy parkować rower mogą tutaj jedynie określone osoby?"</string>
+    <string name="quest_bicycle_parking_fee_title">"Czy parkując tutaj rower, musisz uiścić opłatę?"</string>
+
+    <!-- https://github.com/streetcomplete/StreetComplete/issues/2572 -->
+    <!-- Fuzzy -->
+    <string name="quest_buildingType_house_description2">"inny dom jednorodzinny (niebędący wolnostojącym)"</string>
+    <string name="quest_drinking_water_title">"Czy woda tutaj jest pitna? (%s)"</string>
+    <string name="quest_drinking_water_potable_signed">"Zdatne do picia (oznaczone)"</string>
+    <string name="quest_drinking_water_potable_unsigned">"Zdatne do picia (brak oznaczenia)"</string>
+    <string name="quest_drinking_water_not_potable_signed">"Niezdatne do picia (oznaczone)"</string>
+    <string name="quest_drinking_water_not_potable_unsigned">"Niezdatne do picia (brak oznaczenia)"</string>
+    <string name="quest_postboxRoyalCypher_title">"Jaki monogram królewski jest na tej skrzynce pocztowej?"</string>
+    <string name="quest_postboxRoyalCypher_type_none">"Brak monogramu królewskiego"</string>
+    <string name="quest_postboxRoyalCypher_type_scottish_crown">"Korona Szkocji"</string>
+    <string name="quest_buildingType_fire_station">"Straż pożarna"</string>
+    <string name="quest_recycling_type_beverage_cartons">"Tylko kartony po napojach"</string>
+    <string name="quest_recycling_type_plastic_bottles_and_cartons">"Tylko plastikowe butelki i kartony"</string>
+    <string name="quest_charging_station_name_capacity_title">"Ile samochodów elektrycznych może się jednocześnie ładować w punkcie (%s)?"</string>
+    <string name="team_mode">"Tryb drużynowy"</string>
+    <string name="team_mode_exit">"Wyjdź z trybu drużynowego"</string>
+    <string name="team_mode_description">"W trybie drużynowym możesz podzielić się zadaniami z grupą osób i wspólnie pracować na jednym obszarze."</string>
+    <string name="team_mode_team_size_label">"Ile osób liczy drużyna?"</string>
+    <string name="team_mode_team_size_hint">"Można wybrać od 2 do 12 osób."</string>
+    <string name="team_mode_choose_color">"Niech każdy wybierze unikalny kolor:"</string>
+    <string name="team_mode_active">"Tryb zespołowy aktywny"</string>
+    <string name="team_mode_deactivated">"Tryb zespołowy nieaktywny"</string>
 </resources>

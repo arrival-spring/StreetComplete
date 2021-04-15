@@ -1,6 +1,7 @@
 package de.westnordost.streetcomplete.quests.bus_stop_bench
 
 import de.westnordost.streetcomplete.R
+import de.westnordost.streetcomplete.data.meta.updateWithCheckDate
 import de.westnordost.streetcomplete.data.osm.osmquest.OsmFilterQuestType
 import de.westnordost.streetcomplete.data.osm.changes.StringMapChangesBuilder
 import de.westnordost.streetcomplete.ktx.toYesNo
@@ -26,18 +27,17 @@ class AddBenchStatusOnBusStop : OsmFilterQuestType<Boolean>() {
     override fun getTitle(tags: Map<String, String>): Int {
         val hasName = tags.containsKey("name")
         val isTram = tags["tram"] == "yes"
-        return if (isTram) {
-            if (hasName) R.string.quest_busStopBench_tram_name_title
-            else         R.string.quest_busStopBench_tram_title
-        } else {
-            if (hasName) R.string.quest_busStopBench_name_title
-            else         R.string.quest_busStopBench_title
+        return when {
+            isTram && hasName ->    R.string.quest_busStopBench_tram_name_title
+            isTram ->               R.string.quest_busStopBench_tram_title
+            hasName ->              R.string.quest_busStopBench_name_title
+            else ->                 R.string.quest_busStopBench_title
         }
     }
 
     override fun createForm() = YesNoQuestAnswerFragment()
 
     override fun applyAnswerTo(answer: Boolean, changes: StringMapChangesBuilder) {
-        changes.add("bench", answer.toYesNo())
+        changes.updateWithCheckDate("bench", answer.toYesNo())
     }
 }

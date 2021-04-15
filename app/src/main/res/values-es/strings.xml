@@ -15,8 +15,6 @@
 
     <!-- Fuzzy -->
     <string name="title_activity_settings">"Ajustes"</string>
-
-    <!-- Fuzzy -->
     <string name="pref_category_communication">"Conexión"</string>
 
     <!-- Fuzzy -->
@@ -169,7 +167,7 @@
     <string name="about_title_authors">"Agradecimientos"</string>
 
     <!-- Fuzzy -->
-    <string name="about_summary_authors">"© 2016–2020 Tobias Zwick y demás colaboradores"</string>
+    <string name="about_summary_authors">"© 2016–2021 Tobias Zwick y demás colaboradores"</string>
 
     <!-- Fuzzy -->
     <string name="about_title_repository">"Repositorio de código"</string>
@@ -2373,7 +2371,7 @@ Tenga en cuenta que esta aplicación solicita el número de portal de un edifici
     <string name="quest_maxheight_answer_noSign_question_yes">"Los camiones altos pueden pasar"</string>
     <string name="quest_maxheight_answer_noSign_question_no">"Los camiones altos no caben"</string>
     <string name="quest_address_street_hint">"Toque la carretera en el mapa"</string>
-    <string name="quest_crossing_type_marked">"Cruze marcado"</string>
+    <string name="quest_crossing_type_marked">"Cruce marcado"</string>
     <string name="quest_parkingType_street_side">"Estacionamiento justo al lado de la carretera"</string>
     <string name="quest_parkingType_lane">"Estacionamiento en la calzada"</string>
     <string name="quest_existence_title">"¿Sigue aquí? (%s)"</string>
@@ -2401,6 +2399,31 @@ Tenga en cuenta que esta aplicación solicita el número de portal de un edifici
     <string name="quest_cycleway_answer_no_bicycle_infrastructure_title">"Seleccionar que no hay carril bici"</string>
     <string name="quest_construction_completed_at_known_date">"Estará terminado en la fecha..."</string>
     <string name="quest_construction_completion_date_title">"¿Cuándo estará terminado?"</string>
+    <string name="quest_surface_value_clay">"arcilla"</string>
     <string name="quest_surface_value_artificial_turf">"Césped artificial"</string>
     <string name="quest_surface_value_tartan">"Tartán"</string>
+    <string name="quest_pitchSurface_title_track">"¿Qué superficie tiene esta pista deportiva?"</string>
+    <string name="quest_bicycle_parking_access_title">"¿Está restringido a ciertas personas el aparcar una bici aquí?"</string>
+    <string name="quest_bicycle_parking_fee_title">"¿Hay que pagar para aparcar una bici aquí?"</string>
+    <string name="quest_buildingType_house_description2">"Vivienda unifamiliar"</string>
+    <string name="quest_drinking_water_title">"¿Es potable el agua? (%s)"</string>
+    <string name="quest_drinking_water_potable_signed">"Potable (señalizado)"</string>
+    <string name="quest_drinking_water_potable_unsigned">"Potable (no señalizado)"</string>
+    <string name="quest_drinking_water_not_potable_signed">"No potable (señalizado)"</string>
+    <string name="quest_drinking_water_not_potable_unsigned">"No potable (no señalizado)"</string>
+    <string name="quest_postboxRoyalCypher_title">"¿Qué es la cifra real en éste buzón?"</string>
+    <string name="quest_postboxRoyalCypher_type_none">"No hay cifra real visible."</string>
+    <string name="quest_postboxRoyalCypher_type_scottish_crown">"La Corona de Escocia"</string>
+    <string name="quest_buildingType_fire_station">"Estación de bomberos"</string>
+    <string name="quest_recycling_type_beverage_cartons">"Solo cajas de bebidas"</string>
+    <string name="quest_recycling_type_plastic_bottles_and_cartons">"Solo botellas y cajas de plástico"</string>
+    <string name="quest_charging_station_name_capacity_title">"¿Cuántos coches se pueden cargar en esta estación de carga (%s) al mismo tiempo?"</string>
+    <string name="team_mode">"Modo Equipo"</string>
+    <string name="team_mode_exit">"Salir del Modo Equipo"</string>
+    <string name="team_mode_description">"Al mapear la misma área juntos en un grupo, puede ingresar al modo equipo para dividir las misiones entre todos los miembros del equipo."</string>
+    <string name="team_mode_team_size_label">"¿Cuántas personas hay?"</string>
+    <string name="team_mode_team_size_hint">"El modo equipo funciona para grupos de 2 a 12 personas."</string>
+    <string name="team_mode_choose_color">"Ahora todos en tu grupo eligen un color único:"</string>
+    <string name="team_mode_active">"El modo equipo está activo"</string>
+    <string name="team_mode_deactivated">"El modo equipo está desactivado"</string>
 </resources>
