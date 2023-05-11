@@ -20,6 +20,12 @@ import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.KILOMETERS_P
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.MILES_PER_HOUR
 import de.westnordost.streetcomplete.databinding.QuestMaxspeedBinding
 import de.westnordost.streetcomplete.databinding.QuestMaxspeedNoSignNoSlowZoneConfirmationBinding
+import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
+import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
+import de.westnordost.streetcomplete.osm.maxspeed.IsLivingStreet
+import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedAnswer
+import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
+import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
 import de.westnordost.streetcomplete.quests.AbstractOsmQuestForm
 import de.westnordost.streetcomplete.quests.AnswerItem
 import de.westnordost.streetcomplete.quests.max_speed.SpeedType.ADVISORY

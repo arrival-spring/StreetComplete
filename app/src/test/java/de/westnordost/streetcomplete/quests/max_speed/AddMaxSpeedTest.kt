@@ -2,6 +2,11 @@ package de.westnordost.streetcomplete.quests.max_speed
 
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAdd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
+import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
+import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
+import de.westnordost.streetcomplete.osm.maxspeed.IsLivingStreet
+import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
+import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
 import de.westnordost.streetcomplete.quests.verifyAnswer
 import org.junit.Test
 

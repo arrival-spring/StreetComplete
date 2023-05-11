@@ -8,10 +8,10 @@ import de.westnordost.streetcomplete.data.osm.mapdata.Node
 import de.westnordost.streetcomplete.data.osm.mapdata.filter
 import de.westnordost.streetcomplete.data.user.achievements.EditTypeAchievement.CAR
 import de.westnordost.streetcomplete.osm.ALL_ROADS
-import de.westnordost.streetcomplete.osm.MAXSPEED_TYPE_KEYS
 import de.westnordost.streetcomplete.osm.isPrivateOnFoot
 import de.westnordost.streetcomplete.osm.lane_narrowing_traffic_calming.LaneNarrowingTrafficCalming
 import de.westnordost.streetcomplete.osm.lane_narrowing_traffic_calming.createNarrowingTrafficCalming
+import de.westnordost.streetcomplete.osm.maxspeed.MAXSPEED_TYPE_KEYS
 import de.westnordost.streetcomplete.osm.street_parking.IncompleteStreetParking
 import de.westnordost.streetcomplete.osm.street_parking.NoStreetParking
 import de.westnordost.streetcomplete.osm.street_parking.ParkingPosition

@@ -11,7 +11,6 @@ import de.westnordost.streetcomplete.data.osm.mapdata.MapDataWithGeometry
 import de.westnordost.streetcomplete.data.osm.mapdata.filter
 import de.westnordost.streetcomplete.data.user.achievements.EditTypeAchievement
 import de.westnordost.streetcomplete.osm.ALL_ROADS
-import de.westnordost.streetcomplete.osm.MAXSPEED_TYPE_KEYS
 import de.westnordost.streetcomplete.osm.bicycle_boulevard.BicycleBoulevard
 import de.westnordost.streetcomplete.osm.bicycle_boulevard.createBicycleBoulevard
 import de.westnordost.streetcomplete.osm.cycleway.Cycleway
@@ -21,6 +20,7 @@ import de.westnordost.streetcomplete.osm.cycleway.isAmbiguous
 import de.westnordost.streetcomplete.osm.cycleway_separate.SeparateCycleway
 import de.westnordost.streetcomplete.osm.cycleway_separate.createSeparateCycleway
 import de.westnordost.streetcomplete.osm.isPrivateOnFoot
+import de.westnordost.streetcomplete.osm.maxspeed.MAXSPEED_TYPE_KEYS
 import de.westnordost.streetcomplete.osm.surface.ANYTHING_UNPAVED
 import de.westnordost.streetcomplete.overlays.Color
 import de.westnordost.streetcomplete.overlays.Overlay
