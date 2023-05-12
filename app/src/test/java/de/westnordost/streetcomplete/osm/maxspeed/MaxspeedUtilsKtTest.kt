@@ -1,17 +1,15 @@
-package de.westnordost.streetcomplete.osm
+package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.CountryInfos
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
-import de.westnordost.streetcomplete.osm.maxspeed.getMaxspeedInKmh
-import de.westnordost.streetcomplete.osm.maxspeed.guessMaxspeedInKmh
 import de.westnordost.streetcomplete.testutils.any
 import de.westnordost.streetcomplete.testutils.mock
 import de.westnordost.streetcomplete.testutils.on
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class MaxspeedKtTest {
+class MaxspeedUtilsKtTest {
     @Test fun `get maxspeed`() {
         assertEquals(null, getMaxspeedInKmh(mapOf()))
         assertEquals(null, getMaxspeedInKmh(mapOf("unrelated" to "string")))
