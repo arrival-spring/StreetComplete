@@ -9,15 +9,17 @@ val MAXSPEED_KEYS = setOf(
     "maxspeed",
     "maxspeed:advisory",
     "maxspeed:advised",
-    "maxspeed:lanes"
+)
+
+val MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE = setOf(
+    "maxspeed:type",
+    "zone:maxspeed",
+    "zone:traffic"
 )
 
 val MAXSPEED_TYPE_KEYS = setOf(
-    "source:maxspeed",
-    "zone:maxspeed",
-    "maxspeed:type",
-    "zone:traffic"
-)
+    "source:maxspeed"
+) + MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE
 
 // Taken fom "access" wiki page
 // Many of these may not have been used (very much) for maxspeed, but it is possible that they would be
@@ -71,6 +73,11 @@ fun getZoneMaxspeed(value: String, countryInfos: CountryInfos): MaxSpeedZone? {
         }
     }
     return null
+}
+
+fun isValidMaxspeedType(value: String?): Boolean {
+    return if (value == null) false
+    else isImplicitMaxspeed(value) || isZoneMaxspeed(value) || value == "sign"
 }
 
 fun maxspeedIsNone(tags: Map<String, String>): Boolean {
