@@ -101,7 +101,7 @@ private fun createImplicitMaxspeed(value: String?, countryInfos: CountryInfos): 
     }
 }
 
-// Returns invalid if not in mph or a plain number (i.e. in km/h)
+/** Returns invalid if not in mph or a plain number (i.e. in km/h) */
 private fun createExplicitMaxspeed(tags: Map<String, String>): MaxSpeedAnswer? {
     val maxspeed = tags["maxspeed"] ?: return null
     return if (isInMph(maxspeed)) {
@@ -111,12 +111,16 @@ private fun createExplicitMaxspeed(tags: Map<String, String>): MaxSpeedAnswer? {
         } else {
             Invalid
         }
-    } else if (maxspeedIsWalk(tags)) {
+    }
+    // "walk" and "none" are values in "maxspeed", rather than "maxspeed:type"
+    else if (maxspeedIsWalk(tags)) {
         WalkMaxSpeed
     } else if (maxspeedIsNone(tags)) {
         MaxSpeedIsNone
     } else {
-        val speed = getMaxspeedInKmh(tags)?.roundToInt() // Null if it can't be converted to float, i.e. it is not just a number
+        // Null if speed can't be converted to float, i.e. it is not just a number
+        // maybe it has other units, that is invalid here
+        val speed = getMaxspeedInKmh(tags)?.roundToInt()
         if (speed != null) {
             MaxSpeedSign(Kmh(speed))
         } else {

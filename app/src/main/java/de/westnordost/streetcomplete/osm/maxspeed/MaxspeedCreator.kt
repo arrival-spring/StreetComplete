@@ -19,7 +19,7 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         else -> null
     }
 
-    // If "source:maxspeed" is not a valid type then don't use that for the type key
+    // If "source:maxspeed" exists and is not a valid type then don't use that for the type key
     if (previousTypeKey == "source:maxspeed$dir" && !isValidMaxspeedType(tags[previousTypeKey])) {
         previousTypeKey = when {
             tags.containsKey("zone:maxspeed$dir") -> "zone:maxspeed$dir"
@@ -42,7 +42,7 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     val speedOsmValue = explicit?.toSpeedOsmValue() ?: type?.toSpeedOsmValue()
 
     // zone:maxspeed takes a different format for zone tagging
-    val typeOsmValue = if (typeKey == "zone:maxspeed") {
+    val typeOsmValue = if (typeKey == "zone:maxspeed$dir") {
         type?.toTypeOsmValueZoneMaxspeed()
     } else {
         type?.toTypeOsmValue()
@@ -66,7 +66,7 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         tags.removeMaxspeedTaggingForAllDirections()
     }
 
-    // not doing the same if type is not set as that should not happen
+    // not doing the same if type is not set as that should not happen, it will at least be "sign"
 }
 
 fun Tags.removeMaxspeedTagging(direction: String?) {
