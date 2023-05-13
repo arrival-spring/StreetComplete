@@ -65,6 +65,8 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     if (speedOsmValue == null && previousSpeedOsmValue != null) {
         tags.removeMaxspeedTaggingForAllDirections()
     }
+
+    // not doing the same if type is not set as that should not happen
 }
 
 fun Tags.removeMaxspeedTagging(direction: String?) {

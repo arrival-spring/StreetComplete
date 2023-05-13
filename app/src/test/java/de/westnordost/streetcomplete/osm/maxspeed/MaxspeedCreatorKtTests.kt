@@ -19,6 +19,8 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    /* ---------------------------------- apply plain values ------------------------------------ */
+
     @Test fun `apply plain maxspeed`() {
         verifyAnswer(
             mapOf(),
@@ -83,6 +85,264 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    /* ----------------------------- change 'maxspeed' to another type -------------------------- */
+
+    @Test fun `change plain maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed" to "40"),
+            MaxspeedAndType(MaxSpeedSign(Kmh(60)), null),
+            arrayOf(StringMapEntryModify("maxspeed", "40", "60"))
+        )
+        verifyAnswer(
+            mapOf("maxspeed" to "30 mph"),
+            MaxspeedAndType(MaxSpeedSign(Mph(40)), null),
+            arrayOf(StringMapEntryModify("maxspeed", "30 mph", "40 mph"))
+        )
+    }
+
+    /* ----------------------------------- change to implicit  ---------------------------------- */
+
+    @Test fun `change maxspeed type from one implicit value to another`() {
+        verifyAnswer(
+            mapOf("maxspeed:type" to "DE:urban"),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            arrayOf(StringMapEntryModify("maxspeed:type", "DE:urban", "DE:rural"))
+        )
+        verifyAnswer(
+            mapOf("maxspeed:type" to "DE:motorway"),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            arrayOf(StringMapEntryModify("maxspeed:type", "DE:motorway", "DE:rural"))
+        )
+    }
+
+    @Test fun `change signed maxspeed to implcit maxspeed`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "40",
+                "maxspeed:type" to "sign"
+            ),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            arrayOf(
+                StringMapEntryDelete("maxspeed", "40"),
+                StringMapEntryModify("maxspeed:type", "sign", "DE:urban")
+            )
+        )
+    }
+
+    @Test fun `change zone maxspeed to implcit maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:type" to "DE:zone30"),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "DE:zone30", "DE:urban")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed:type" to "DE:zone30",
+                "maxspeed" to "30"
+            ),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "DE:zone30", "DE:urban"),
+                StringMapEntryDelete("maxspeed", "30")
+            )
+        )
+    }
+
+    /* ----------------------------------- change to zone --------------------------------------- */
+
+    @Test fun `change one zone maxspeed to another`() {
+        verifyAnswer(
+            mapOf("maxspeed:type" to "DE:zone30"),
+            MaxspeedAndType(null, MaxSpeedZone(Kmh(20), "DE", "zone20")),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "DE:zone30", "DE:zone20"),
+                StringMapEntryAdd("maxspeed", "20")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:type" to "GB:zone20"),
+            MaxspeedAndType(null, MaxSpeedZone(Mph(30), "GB", "zone30")),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "GB:zone20", "GB:zone30"),
+                StringMapEntryAdd("maxspeed", "30 mph")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed:type" to "DE:zone30",
+                "maxspeed" to "30"
+            ),
+            MaxspeedAndType(null, MaxSpeedZone(Kmh(20), "DE", "zone20")),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "DE:zone30", "DE:zone20"),
+                StringMapEntryModify("maxspeed", "30", "20")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed:type" to "GB:zone20",
+                "maxspeed" to "20 mph"
+            ),
+            MaxspeedAndType(null, MaxSpeedZone(Mph(30), "GB", "zone30")),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "GB:zone20", "GB:zone30"),
+                StringMapEntryModify("maxspeed", "20 mph", "30 mph")
+            )
+        )
+    }
+
+    @Test fun `change explicit maxspeed to zone maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed" to "40"),
+            MaxspeedAndType(null, MaxSpeedZone(Kmh(30), "DE", "zone30")),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:type", "DE:zone30"),
+                StringMapEntryModify("maxspeed", "40", "30")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed" to "30 mph"),
+            MaxspeedAndType(null, MaxSpeedZone(Mph(20), "GB", "zone20")),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:type", "GB:zone20"),
+                StringMapEntryModify("maxspeed", "30 mph", "20 mph")
+            )
+        )
+    }
+
+    @Test fun `change signed maxspeed to zone maxspeed`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "40",
+                "maxspeed:type" to "sign"
+            ),
+            MaxspeedAndType(null, MaxSpeedZone(Kmh(30), "DE", "zone30")),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "40", "30"),
+                StringMapEntryModify("maxspeed:type", "sign", "DE:zone30")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "30 mph",
+                "maxspeed:type" to "sign"
+            ),
+            MaxspeedAndType(null, MaxSpeedZone(Mph(20), "GB", "zone20")),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "30 mph", "20 mph"),
+                StringMapEntryModify("maxspeed:type", "sign", "GB:zone20")
+            )
+        )
+    }
+
+    @Test fun `change implicit maxspeed to zone maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:type" to "DE:urban"),
+            MaxspeedAndType(null, MaxSpeedZone(Kmh(30), "DE", "zone30")),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "DE:urban", "DE:zone30"),
+                StringMapEntryAdd("maxspeed", "30")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:type" to "GB:nsl_restricted"),
+            MaxspeedAndType(null, MaxSpeedZone(Mph(20), "GB", "zone20")),
+            arrayOf(
+                StringMapEntryModify("maxspeed:type", "GB:nsl_restricted", "GB:zone20"),
+                StringMapEntryAdd("maxspeed", "20 mph")
+            )
+        )
+    }
+
+    /* ----------------------------------- change to signed maxspeed ---------------------------- */
+
+    @Test fun `change one signed maxspeed to another`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "60",
+                "maxspeed:type" to "sign"
+            ),
+            MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "60", "40")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "40 mph",
+                "maxspeed:type" to "sign"
+            ),
+            MaxspeedAndType(MaxSpeedSign(Mph(50)), JustSign),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "40 mph", "50 mph")
+            )
+        )
+    }
+
+    @Test fun `change implicit to signed maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:type" to "DE:urban"),
+            MaxspeedAndType(MaxSpeedSign(Kmh(20)), JustSign),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "20"),
+                StringMapEntryModify("maxspeed:type", "DE:urban", "sign")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:type" to "GB:nsl_single"),
+            MaxspeedAndType(MaxSpeedSign(Mph(50)), JustSign),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "50 mph"),
+                StringMapEntryModify("maxspeed:type", "GB:nsl_single", "sign")
+            )
+        )
+    }
+
+    @Test fun `change zone to signed maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:type" to "DE:zone30"),
+            MaxspeedAndType(MaxSpeedSign(Kmh(20)), JustSign),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "20"),
+                StringMapEntryModify("maxspeed:type", "DE:zone30", "sign")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed:type" to "DE:zone30",
+                "maxspeed" to "30"
+            ),
+            MaxspeedAndType(MaxSpeedSign(Kmh(20)), JustSign),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "30", "20"),
+                StringMapEntryModify("maxspeed:type", "DE:zone30", "sign")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:type" to "GB:zone20"),
+            MaxspeedAndType(MaxSpeedSign(Mph(30)), JustSign),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "30 mph"),
+                StringMapEntryModify("maxspeed:type", "GB:zone20", "sign")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed:type" to "GB:zone20",
+                "maxspeed" to "20"
+            ),
+            MaxspeedAndType(MaxSpeedSign(Mph(30)), JustSign),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "20", "30 mph"),
+                StringMapEntryModify("maxspeed:type", "GB:zone20", "sign")
+            )
+        )
+    }
+
+    /* ----------------------------------- different type tags  --------------------------------- */
+
     @Test fun `respect previously used type tag`() {
         verifyAnswer(
             mapOf("source:maxspeed" to "sign"),
@@ -98,14 +358,6 @@ class MaxspeedCreatorKtTests {
             mapOf("zone:traffic" to "DE:rural"),
             MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
             arrayOf(StringMapEntryModify("zone:traffic", "DE:rural", "DE:urban"))
-        )
-        verifyAnswer(
-            mapOf("source:maxspeed" to "sign"),
-            MaxspeedAndType(null, MaxSpeedZone(Kmh(20), "DE", "zone20")),
-            arrayOf(
-                StringMapEntryModify("source:maxspeed", "sign", "DE:zone20"),
-                StringMapEntryAdd("maxspeed", "20")
-            )
         )
     }
 
@@ -167,6 +419,32 @@ class MaxspeedCreatorKtTests {
             )
         )
     }
+
+    @Test fun `do not change type tags when changing speed if type is not changed`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "100",
+                "source:maxspeed" to "DE:motorway"
+            ),
+            MaxspeedAndType(MaxSpeedSign(Kmh(110)), null),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "100", "110"),
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "100",
+                "source:maxspeed" to "survey",
+                "maxspeed:type" to "DE:motorway"
+            ),
+            MaxspeedAndType(MaxSpeedSign(Kmh(110)), null),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "100", "110"),
+            )
+        )
+    }
+
+    /* ----------------------------------- clean old tagging ------------------------------------ */
 
     @Test fun `clean up previous maxspeed tagging when changing speed`() {
         verifyAnswer(
@@ -257,30 +535,6 @@ class MaxspeedCreatorKtTests {
                 StringMapEntryModify("maxspeed:type", "DE:urban", "DE:rural"),
                 StringMapEntryDelete("maxspeed:type:forward", "DE:urban"),
                 StringMapEntryDelete("maxspeed:type:backward", "DE:rural"),
-            )
-        )
-    }
-
-    @Test fun `do not change type tags when changing speed if type is not changed`() {
-        verifyAnswer(
-            mapOf(
-                "maxspeed" to "100",
-                "source:maxspeed" to "DE:motorway"
-            ),
-            MaxspeedAndType(MaxSpeedSign(Kmh(110)), null),
-            arrayOf(
-                StringMapEntryModify("maxspeed", "100", "110"),
-            )
-        )
-        verifyAnswer(
-            mapOf(
-                "maxspeed" to "100",
-                "source:maxspeed" to "survey",
-                "maxspeed:type" to "DE:motorway"
-            ),
-            MaxspeedAndType(MaxSpeedSign(Kmh(110)), null),
-            arrayOf(
-                StringMapEntryModify("maxspeed", "100", "110"),
             )
         )
     }
