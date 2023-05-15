@@ -8,6 +8,7 @@ import de.westnordost.streetcomplete.quests.max_speed.Mph
 import de.westnordost.streetcomplete.testutils.mock
 import de.westnordost.streetcomplete.testutils.on
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class MaxspeedParserKtTest {
@@ -421,6 +422,77 @@ class MaxspeedParserKtTest {
                 "source:maxspeed" to "survey",
                 "maxspeed:type" to "DE:urban",
                 "zone:traffic" to "DE:urban",
+                "zone:maxspeed" to "DE:urban"
+            )
+        )
+    }
+
+    /* -------------------------------------- living_street ------------------------------------- */
+
+    @Test fun `living street type`() {
+        assertEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse("highway" to "living_street")
+        )
+        assertEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "residential",
+                "living_street" to "yes"
+            )
+        )
+        assertEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "residential",
+                "living_street" to "yes",
+                "source:maxspeed" to "survey"
+            )
+        )
+        assertEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "service",
+                "maxspeed:type" to "PL:living_street"
+            )
+        )
+    }
+
+    @Test fun `not living street type if there is other valid maxspeed tagging`() {
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "living_street",
+                "maxspeed" to "20"
+            )
+        )
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "living_street",
+                "maxspeed:type" to "DE:zone20"
+            )
+        )
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "living_street",
+                "source:maxspeed" to "DE:urban"
+            )
+        )
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "residential",
+                "living_street" to "yes",
+                "maxspeed" to "20"
+            )
+        )
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "highway" to "residential",
+                "living_street" to "yes",
                 "zone:maxspeed" to "DE:urban"
             )
         )

@@ -85,6 +85,16 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    @Test fun `change to living street`() {
+        verifyAnswer(
+            mapOf("highway" to "residential"),
+            MaxspeedAndType(null, IsLivingStreet),
+            arrayOf(
+                StringMapEntryModify("highway", "residential", "living_street")
+            )
+        )
+    }
+
     /* ----------------------------- change 'maxspeed' to another type -------------------------- */
 
     @Test fun `change plain maxspeed`() {
@@ -337,6 +347,61 @@ class MaxspeedCreatorKtTests {
             arrayOf(
                 StringMapEntryModify("maxspeed", "20", "30 mph"),
                 StringMapEntryModify("maxspeed:type", "GB:zone20", "sign")
+            )
+        )
+    }
+
+    /* ----------------------------------- change to living street ------------------------------ */
+
+    /* Changing to a living street removes all maxspeed and type tagging because we are in the
+     * context of speed limits. So the user was shown the current speed limit and answered that
+     * in fact it is a living street, thereby saying that the speed limit tagged before was wrong. */
+    @Test fun `changing to living street removes any previous maxspeed and type tagging`() {
+        verifyAnswer(
+            mapOf(
+                "highway" to "residential",
+                "maxspeed" to "50",
+                "maxspeed:type" to "sign",
+                "source:maxspeed" to "DE:urban"
+            ),
+            MaxspeedAndType(null, IsLivingStreet),
+            arrayOf(
+                StringMapEntryModify("highway", "residential", "living_street"),
+                StringMapEntryDelete("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:type", "sign"),
+                StringMapEntryDelete("source:maxspeed", "DE:urban")
+            )
+        )
+    }
+
+    @Test fun `living street with other maxspeed tagging to living street type removes previous maxspeed and type tagging`() {
+        verifyAnswer(
+            mapOf(
+                "highway" to "living_street",
+                "maxspeed" to "50",
+                "maxspeed:type" to "sign",
+                "source:maxspeed" to "DE:urban"
+            ),
+            MaxspeedAndType(null, IsLivingStreet),
+            arrayOf(
+                StringMapEntryDelete("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:type", "sign"),
+                StringMapEntryDelete("source:maxspeed", "DE:urban")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "highway" to "service",
+                "living_street" to "yes",
+                "maxspeed" to "50",
+                "maxspeed:type" to "sign",
+                "source:maxspeed" to "DE:urban"
+            ),
+            MaxspeedAndType(null, IsLivingStreet),
+            arrayOf(
+                StringMapEntryDelete("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:type", "sign"),
+                StringMapEntryDelete("source:maxspeed", "DE:urban")
             )
         )
     }

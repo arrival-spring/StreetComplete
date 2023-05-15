@@ -35,8 +35,9 @@ val VEHICLE_TYPES = setOf(
     "hazmat"
 )
 
-private val implicitRegex = Regex("([A-Z]+):(.*)")
-private val zoneRegex = Regex("([A-Z-]*):(?:zone)?:?([0-9]+)")
+private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.*)")
+private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?([0-9]+)")
+private val livingStreetRegex = Regex("([A-Z-]+-?[A-Z]*):(?:living_street)?")
 private val mphRegex = Regex("([0-9]+) mph")
 
 fun isImplicitMaxspeed(value: String): Boolean {
@@ -75,6 +76,11 @@ fun getZoneMaxspeed(value: String, countryInfos: CountryInfos): MaxSpeedZone? {
     return null
 }
 
+fun isLivingStreetMaxspeed(value: String): Boolean {
+    val matchResult = livingStreetRegex.matchEntire(value)
+    return matchResult != null
+}
+
 fun isValidMaxspeedType(value: String?): Boolean {
     return if (value == null) false
     else isImplicitMaxspeed(value) || isZoneMaxspeed(value) || value == "sign"
@@ -97,6 +103,10 @@ fun getMaxspeedinMph(tags: Map<String, String>): Float? {
     return if (speed.endsWith(" mph")) {
         return speed.substring(0, speed.length - 4).toFloatOrNull()
     } else null
+}
+
+fun isLivingStreet(tags: Map<String, String>): Boolean {
+    return (tags["living_street"] == "yes" || tags["highway"] == "living_street")
 }
 
 /** Functions to get speed in km/h from tags */

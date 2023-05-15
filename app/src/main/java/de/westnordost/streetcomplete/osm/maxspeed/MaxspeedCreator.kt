@@ -65,8 +65,20 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     if (speedOsmValue == null && previousSpeedOsmValue != null) {
         tags.removeMaxspeedTaggingForAllDirections()
     }
-
     // not doing the same if type is not set as that should not happen, it will at least be "sign"
+
+    // Changing to a living street removes all maxspeed and type tagging because we are in the
+    // context of speed limits. So the user was shown the current speed limit and answered that
+    // in fact it is a living street, thereby saying that the speed limit tagged before was wrong.
+    if (type == IsLivingStreet) {
+        tags.removeMaxspeedTaggingForAllDirections()
+        tags.removeMaxspeedTypeTaggingForAllDirections(preserveSourceMaxspeed)
+        // Don't change highway type if "living_street" is set
+        if (tags["highway"] != "living_street" && tags["living_street"] != "yes") {
+            tags["highway"] = "living_street"
+            tags.remove("living_street") // In case it was set to e.g. "no"
+        }
+    }
 }
 
 fun Tags.removeMaxspeedTagging(direction: String?) {

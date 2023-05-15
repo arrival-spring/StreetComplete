@@ -8,7 +8,11 @@ import kotlin.math.roundToInt
 
 /** Returns explicit and implicit maxspeed. Returns null if there is no such tagging */
 fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos): MaxspeedAndType? {
-    if (!tags.keys.containsAny(MAXSPEED_TYPE_KEYS) && !tags.keys.containsAny(MAXSPEED_KEYS)) return null
+    if (
+        !tags.keys.containsAny(MAXSPEED_TYPE_KEYS) &&
+        !tags.keys.containsAny(MAXSPEED_KEYS) &&
+        !isLivingStreet(tags)
+    ) return null
 
     val maxspeedTag = tags["maxspeed"]
 
@@ -84,6 +88,12 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos)
         }
     }
 
+    // If there is no other maxspeed tagging over-riding it then the fact that the road is a
+    // living street is itself an implicit maxspeed
+    if (maxspeedType == null && maxspeedValue == null && isLivingStreet(tags)) {
+        maxspeedType = IsLivingStreet
+    }
+
     return MaxspeedAndType(maxspeedValue, maxspeedType)
 }
 
@@ -92,8 +102,12 @@ private fun createImplicitMaxspeed(value: String?, countryInfos: CountryInfos): 
         null
     } else if (value == "sign") {
         JustSign
-    } else if (isZoneMaxspeed(value)) { // Check for zone first because zone format is the same as implicit format
+    }
+    // Check for other implicit types first because the format is the same as implicit format
+    else if (isZoneMaxspeed(value)) {
         getZoneMaxspeed(value, countryInfos)
+    } else if (isLivingStreetMaxspeed(value)) {
+        IsLivingStreet
     } else if (isImplicitMaxspeed(value)) {
         getImplicitMaxspeed(value)
     } else {
