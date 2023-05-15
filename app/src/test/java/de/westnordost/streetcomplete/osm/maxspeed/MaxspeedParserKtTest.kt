@@ -247,6 +247,14 @@ class MaxspeedParserKtTest {
             MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
             parse("zone:traffic" to "DE:urban")
         )
+        assertEquals(
+            MaxspeedAndType(null, ImplicitMaxSpeed("BE-WAL", "urban", null)),
+            parse("maxspeed:type" to "BE-WAL:urban")
+        )
+        assertEquals(
+            MaxspeedAndType(null, ImplicitMaxSpeed("CA-AB", "urban", null)),
+            parse("maxspeed:type" to "CA-AB:urban")
+        )
     }
 
     @Test fun `maxspeed zone`() {
@@ -367,7 +375,7 @@ class MaxspeedParserKtTest {
         )
     }
 
-    @Test fun `source_maxspeed unknown value and other valid type tag`() {
+    @Test fun `source_maxspeed unknown value and other valid type tag is valid`() {
         assertEquals(
             MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
             parse(
@@ -391,7 +399,7 @@ class MaxspeedParserKtTest {
         )
     }
 
-    @Test fun `source_maxspeed unknown value and other duplicate valid type tags`() {
+    @Test fun `source_maxspeed unknown value and other duplicate valid type tags is valid`() {
         assertEquals(
             MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
             parse(
