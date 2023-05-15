@@ -88,30 +88,28 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos)
         }
     }
 
-    // If there is no other maxspeed tagging over-riding it then the fact that the road is a
-    // living street is itself an implicit maxspeed
-    if (maxspeedType == null && maxspeedValue == null && isLivingStreet(tags)) {
-        maxspeedType = IsLivingStreet
+    // If there is no other maxspeed tagging over-riding it then there are other tags that are
+    // essentially an implicit maxspeed of themselves
+    if (maxspeedType == null && maxspeedValue == null) {
+        maxspeedType = when {
+            isLivingStreet(tags) -> IsLivingStreet
+            isSchoolZone(tags) -> IsSchoolZone
+            else -> null
+        }
     }
 
     return MaxspeedAndType(maxspeedValue, maxspeedType)
 }
 
 private fun createImplicitMaxspeed(value: String?, countryInfos: CountryInfos): MaxSpeedAnswer? {
-    return if (value == null) {
-        null
-    } else if (value == "sign") {
-        JustSign
-    }
-    // Check for other implicit types first because the format is the same as implicit format
-    else if (isZoneMaxspeed(value)) {
-        getZoneMaxspeed(value, countryInfos)
-    } else if (isLivingStreetMaxspeed(value)) {
-        IsLivingStreet
-    } else if (isImplicitMaxspeed(value)) {
-        getImplicitMaxspeed(value)
-    } else {
-        Invalid
+    return when {
+        value == null -> null
+        value == "sign" -> JustSign
+        // Check for other implicit types first because the format is the same as implicit format
+        isZoneMaxspeed(value) -> getZoneMaxspeed(value, countryInfos)
+        isLivingStreetMaxspeed(value) -> IsLivingStreet
+        isImplicitMaxspeed(value) -> getImplicitMaxspeed(value)
+        else -> Invalid
     }
 }
 

@@ -109,6 +109,10 @@ fun isLivingStreet(tags: Map<String, String>): Boolean {
     return (tags["living_street"] == "yes" || tags["highway"] == "living_street")
 }
 
+fun isSchoolZone(tags: Map<String, String>): Boolean {
+    return (tags["hazard"] == "school_zone")
+}
+
 /** Functions to get speed in km/h from tags */
 
 fun getMaxspeedInKmh(tags: Map<String, String>): Float? {

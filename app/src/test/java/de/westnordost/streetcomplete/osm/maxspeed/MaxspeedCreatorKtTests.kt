@@ -95,6 +95,16 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    @Test fun `mark as school zone`() {
+        verifyAnswer(
+            mapOf(),
+            MaxspeedAndType(null, IsSchoolZone),
+            arrayOf(
+                StringMapEntryAdd("hazard", "school_zone")
+            )
+        )
+    }
+
     /* ----------------------------- change 'maxspeed' to another type -------------------------- */
 
     @Test fun `change plain maxspeed`() {
@@ -399,6 +409,28 @@ class MaxspeedCreatorKtTests {
             ),
             MaxspeedAndType(null, IsLivingStreet),
             arrayOf(
+                StringMapEntryDelete("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:type", "sign"),
+                StringMapEntryDelete("source:maxspeed", "DE:urban")
+            )
+        )
+    }
+
+    /* ----------------------------------- change to school znoe -------------------------------- */
+
+    /* Changing to a school zone removes all maxspeed and type tagging because we are in the
+     * context of speed limits. So the user was shown the current speed limit and answered that
+     * in fact it is a school zone, thereby saying that the speed limit tagged before was wrong. */
+    @Test fun `changing to school zone removes any previous maxspeed and type tagging`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "50",
+                "maxspeed:type" to "sign",
+                "source:maxspeed" to "DE:urban"
+            ),
+            MaxspeedAndType(null, IsSchoolZone),
+            arrayOf(
+                StringMapEntryAdd("hazard", "school_zone"),
                 StringMapEntryDelete("maxspeed", "50"),
                 StringMapEntryDelete("maxspeed:type", "sign"),
                 StringMapEntryDelete("source:maxspeed", "DE:urban")

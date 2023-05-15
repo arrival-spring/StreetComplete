@@ -11,6 +11,7 @@ data class AdvisorySpeedSign(val value: Speed) : MaxSpeedAnswer
 data class ImplicitMaxSpeed(val countryCode: String, val roadType: String, val lit: Boolean?) :
     MaxSpeedAnswer
 object IsLivingStreet : MaxSpeedAnswer
+object IsSchoolZone : MaxSpeedAnswer
 object WalkMaxSpeed : MaxSpeedAnswer
 object MaxSpeedIsNone : MaxSpeedAnswer
 object JustSign : MaxSpeedAnswer

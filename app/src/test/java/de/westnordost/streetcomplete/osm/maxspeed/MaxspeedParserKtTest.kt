@@ -497,6 +497,54 @@ class MaxspeedParserKtTest {
             )
         )
     }
+
+    /* -------------------------------------- school zone --------------------------------------- */
+
+    @Test fun `school zone type`() {
+        assertEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse("hazard" to "school_zone")
+        )
+        assertEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "hazard" to "school_zone",
+                "highway" to "residential",
+                "source:maxspeed" to "survey"
+            )
+        )
+    }
+
+    @Test fun `not school zone if there is other valid maxspeed tagging`() {
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "hazard" to "school_zone",
+                "maxspeed" to "20"
+            )
+        )
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "hazard" to "school_zone",
+                "maxspeed:type" to "DE:zone20"
+            )
+        )
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "hazard" to "school_zone",
+                "source:maxspeed" to "DE:urban"
+            )
+        )
+        assertNotEquals(
+            MaxspeedAndType(null, IsLivingStreet),
+            parse(
+                "hazard" to "school_zone",
+                "zone:maxspeed" to "DE:urban"
+            )
+        )
+    }
 }
 
 private fun parse(vararg tags: Pair<String, String>): MaxspeedAndType? {
