@@ -527,6 +527,42 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    @Test fun `use maxspeed for type if it was used before, even if tagged as a zone that is signed`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "RU:zone30",
+                "maxspeed:type" to "sign"
+            ),
+            MaxspeedAndType(null, ImplicitMaxSpeed("RU", "rural", null)),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "RU:zone30", "RU:rural"),
+                StringMapEntryDelete("maxspeed:type", "sign")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "RU:zone30",
+                "maxspeed:type" to "sign"
+            ),
+            MaxspeedAndType(MaxSpeedZone(Kmh(20), "RU", "zone20"), JustSign),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "RU:zone30", "RU:zone20"),
+                StringMapEntryModify("maxspeed:type", "sign", "sign"),
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "maxspeed" to "RU:zone30",
+                "source:maxspeed" to "sign"
+            ),
+            MaxspeedAndType(MaxSpeedZone(Kmh(20), "RU", "zone20"), JustSign),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "RU:zone30", "RU:zone20"),
+                StringMapEntryModify("source:maxspeed", "sign", "sign"),
+            )
+        )
+    }
+
     @Test fun `do not keep using maxspeed for type if adding both explicit and type`() {
         verifyAnswer(
             mapOf("maxspeed" to "RU:urban"),
