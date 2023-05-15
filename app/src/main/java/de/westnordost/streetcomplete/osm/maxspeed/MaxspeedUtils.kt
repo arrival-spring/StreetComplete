@@ -59,6 +59,9 @@ fun isZoneMaxspeed(value: String): Boolean {
     return zoneRegex.matchEntire(value) != null
 }
 
+/* Needs to know the country code because MaxSpeedZone contains a Speed, which requires units.
+ * (At the moment) there are no countries which have both maxspeed zones and a mixture of speed
+ * units (per country_metadata). */
 fun getZoneMaxspeed(value: String, countryInfos: CountryInfos): MaxSpeedZone? {
     val matchResult = zoneRegex.matchEntire(value)
     if (matchResult != null) {
