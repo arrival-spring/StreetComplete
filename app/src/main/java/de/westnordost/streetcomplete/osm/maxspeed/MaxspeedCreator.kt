@@ -8,33 +8,28 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     val dir = if (direction != null) ":$direction" else ""
     val speedKey = "maxspeed$dir"
     val previousSpeedOsmValue = tags[speedKey]
-    var preserveSourceMaxspeed = false
+    // Preserve "source:maxspeed" if it exists and is not a valid maxspeed type
+    val preserveSourceMaxspeed = tags["source:maxspeed$dir"] != null && !isValidMaxspeedType(tags["source:maxspeed$dir"])
 
     // Take a single type key in this order of preference
-    var previousTypeKey = when {
+    val previousTypeKey = when {
+        // Use "maxspeed" for type if it was used before and there is no numerical speed limit to tag
+        isValidMaxspeedType(tags["maxspeed$dir"]) && explicit == null -> "maxspeed$dir"
         tags.containsKey("maxspeed:type$dir") -> "maxspeed:type$dir"
-        tags.containsKey("source:maxspeed$dir") -> "source:maxspeed$dir"
+        // Only take "source:maxspeed" if is a valid type (not actually being used as "source")
+        tags.containsKey("source:maxspeed$dir") && isValidMaxspeedType(tags["source:maxspeed$dir"]) -> "source:maxspeed$dir"
         tags.containsKey("zone:maxspeed$dir") -> "zone:maxspeed$dir"
         tags.containsKey("zone:traffic$dir") -> "zone:traffic$dir"
         else -> null
     }
 
-    // If "source:maxspeed" exists and is not a valid type then don't use that for the type key
-    if (previousTypeKey == "source:maxspeed$dir" && !isValidMaxspeedType(tags[previousTypeKey])) {
-        previousTypeKey = when {
-            tags.containsKey("zone:maxspeed$dir") -> "zone:maxspeed$dir"
-            tags.containsKey("zone:traffic$dir") -> "zone:traffic$dir"
-            else -> null
-        }
-        preserveSourceMaxspeed = true
-    }
-
     val previousTypeOsmValue = tags[previousTypeKey]
 
+    // Use the same type key as before, or else use "maxspeed:type"
     var typeKey = previousTypeKey ?: "maxspeed:type$dir"
 
     // "sign" is only valid in "maxspeed:type" and "source:maxspeed"
-    if (type is JustSign && (typeKey == "zone:maxspeed$dir" || typeKey == "zone:traffic$dir")) {
+    if (type is JustSign && (typeKey != "maxspeed:type$dir" || typeKey != "source:maxspeed$dir")) {
         typeKey = "maxspeed:type$dir"
     }
 
@@ -48,6 +43,14 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         type?.toTypeOsmValue()
     }
 
+    // maxspeed is now not set
+    // do this first in case "maxspeed" is used for the type
+    if (speedOsmValue == null && previousSpeedOsmValue != null) {
+        tags.removeMaxspeedTaggingForAllDirections()
+    }
+    // not doing the same if type is not set as that should not happen, it will at least be "sign"
+    // or if we are marking living street or school zone then that is dealt with below
+
     // if type has changed then remove all possible old tagging
     if (typeOsmValue != null && typeOsmValue != previousTypeOsmValue) {
         tags.removeMaxspeedTaggingForAllDirections()
@@ -60,13 +63,6 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         tags.removeMaxspeedTaggingForAllDirections()
         tags[speedKey] = speedOsmValue
     }
-
-    // maxspeed is now not set
-    if (speedOsmValue == null && previousSpeedOsmValue != null) {
-        tags.removeMaxspeedTaggingForAllDirections()
-    }
-    // not doing the same if type is not set as that should not happen, it will at least be "sign"
-    // or if we are marking living street or school zone then that is dealt with below
 
     // Changing to a living street or school zone removes all maxspeed and type tagging because we
     // are in the context of speed limits. So the user was shown the current speed limit and

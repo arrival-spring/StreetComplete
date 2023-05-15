@@ -25,7 +25,7 @@ val MAXSPEED_TYPE_KEYS = setOf(
 // Many of these may not have been used (very much) for maxspeed, but it is possible that they would be
 val VEHICLE_TYPES = setOf(
     "vehicle",
-    "bicycle", "eletric_bicycle", "kick_scooter",
+    "bicycle", "electric_bicycle", "kick_scooter",
     "carriage", "cycle_rickshaw", "trailer", "caravan",
     "motor_vehicle", "motorcycle", "moped", "speed_pedelec", "mofa", "small_electric_vehicle",
     "motorcar", "motorhome", "tourist_bus", "coach",

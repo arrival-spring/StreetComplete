@@ -11,7 +11,8 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos)
     if (
         !tags.keys.containsAny(MAXSPEED_TYPE_KEYS) &&
         !tags.keys.containsAny(MAXSPEED_KEYS) &&
-        !isLivingStreet(tags)
+        !isLivingStreet(tags) &&
+        !isSchoolZone(tags)
     ) return null
 
     val maxspeedTag = tags["maxspeed"]

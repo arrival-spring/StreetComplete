@@ -135,7 +135,7 @@ class MaxspeedCreatorKtTests {
         )
     }
 
-    @Test fun `change signed maxspeed to implcit maxspeed`() {
+    @Test fun `change signed maxspeed to implicit maxspeed`() {
         verifyAnswer(
             mapOf(
                 "maxspeed" to "40",
@@ -149,7 +149,7 @@ class MaxspeedCreatorKtTests {
         )
     }
 
-    @Test fun `change zone maxspeed to implcit maxspeed`() {
+    @Test fun `change zone maxspeed to implicit maxspeed`() {
         verifyAnswer(
             mapOf("maxspeed:type" to "DE:zone30"),
             MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
@@ -416,7 +416,7 @@ class MaxspeedCreatorKtTests {
         )
     }
 
-    /* ----------------------------------- change to school znoe -------------------------------- */
+    /* ----------------------------------- change to school zone -------------------------------- */
 
     /* Changing to a school zone removes all maxspeed and type tagging because we are in the
      * context of speed limits. So the user was shown the current speed limit and answered that
@@ -513,6 +513,27 @@ class MaxspeedCreatorKtTests {
                 StringMapEntryDelete("zone:traffic", "DE:urban"),
                 StringMapEntryAdd("maxspeed:type", "sign"),
                 StringMapEntryAdd("maxspeed", "30")
+            )
+        )
+    }
+
+    @Test fun `use maxspeed for type if it was used before`() {
+        verifyAnswer(
+            mapOf("maxspeed" to "RU:urban"),
+            MaxspeedAndType(null, ImplicitMaxSpeed("RU", "rural", null)),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "RU:urban", "RU:rural")
+            )
+        )
+    }
+
+    @Test fun `do not keep using maxspeed for type if adding both explicit and type`() {
+        verifyAnswer(
+            mapOf("maxspeed" to "RU:urban"),
+            MaxspeedAndType(MaxSpeedSign(Kmh(50)), ImplicitMaxSpeed("RU", "rural", null)),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "RU:urban", "50"),
+                StringMapEntryAdd("maxspeed:type", "RU:rural")
             )
         )
     }
