@@ -20,10 +20,10 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos)
     var maxspeedType: MaxSpeedAnswer?
     val impliedMaxspeedValue: MaxSpeedAnswer?
 
-    val taggedMaxspeedType = createImplicitMaxspeed(tags["maxspeed:type"], countryInfos)
-    val taggedSourceMaxspeed = createImplicitMaxspeed(tags["source:maxspeed"], countryInfos)
-    val taggedZoneMaxspeed = createImplicitMaxspeed(tags["zone:maxspeed"], countryInfos) // e.g. "DE:30", "DE:urban" etc.
-    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic"], countryInfos) // e.g. "DE:urban", "DE:zone30" etc.
+    val taggedMaxspeedType = createImplicitMaxspeed(tags["maxspeed:type"], tags, countryInfos)
+    val taggedSourceMaxspeed = createImplicitMaxspeed(tags["source:maxspeed"], tags, countryInfos)
+    val taggedZoneMaxspeed = createImplicitMaxspeed(tags["zone:maxspeed"], tags, countryInfos) // e.g. "DE:30", "DE:urban" etc.
+    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic"], tags, countryInfos) // e.g. "DE:urban", "DE:zone30" etc.
 
     // Assume that invalid "source:maxspeed" means that it is actual "source", not type
     val maxspeedTypesList = if (taggedSourceMaxspeed == Invalid) {
@@ -52,7 +52,7 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos)
     // maxspeed has a non-numerical value, see if it is valid
     if (maxspeedValue == Invalid && maxspeedTag != null) {
         val maxspeedAsType = if (isImplicitMaxspeed(maxspeedTag)) {
-            createImplicitMaxspeed(maxspeedTag, countryInfos)
+            createImplicitMaxspeed(maxspeedTag, tags, countryInfos)
         } else {
             null
         }
@@ -102,14 +102,15 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos)
     return MaxspeedAndType(maxspeedValue, maxspeedType)
 }
 
-private fun createImplicitMaxspeed(value: String?, countryInfos: CountryInfos): MaxSpeedAnswer? {
+/** Needs all tags to determine if way is lit */
+private fun createImplicitMaxspeed(value: String?, tags: Map<String, String>, countryInfos: CountryInfos): MaxSpeedAnswer? {
     return when {
         value == null -> null
         value == "sign" -> JustSign
         // Check for other implicit types first because the format is the same as implicit format
         isZoneMaxspeed(value) -> getZoneMaxspeed(value, countryInfos)
         isLivingStreetMaxspeed(value) -> IsLivingStreet
-        isImplicitMaxspeed(value) -> getImplicitMaxspeed(value)
+        isImplicitMaxspeed(value) -> getImplicitMaxspeed(value, tags)
         else -> Invalid
     }
 }

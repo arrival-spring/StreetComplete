@@ -257,6 +257,33 @@ class MaxspeedParserKtTest {
         )
     }
 
+    @Test fun `recognise lit tag for implicit types`() {
+        assertEquals(
+            MaxspeedAndType(null, ImplicitMaxSpeed("GB", "nsl_restricted", true)),
+            parse(
+                "maxspeed:type" to "GB:nsl_restricted",
+                "lit" to "yes"
+            )
+        )
+        assertEquals(
+            MaxspeedAndType(null, ImplicitMaxSpeed("GB", "nsl_single", false)),
+            parse(
+                "maxspeed:type" to "GB:nsl_single",
+                "lit" to "no"
+            )
+        )
+    }
+
+    @Test fun `invalid value for lit is null`() {
+        assertEquals(
+            MaxspeedAndType(null, ImplicitMaxSpeed("GB", "nsl_restricted", null)),
+            parse(
+                "maxspeed:type" to "GB:nsl_restricted",
+                "lit" to "unknown"
+            )
+        )
+    }
+
     @Test fun `maxspeed zone`() {
         assertEquals(
             MaxspeedAndType(MaxSpeedSign(Kmh(30)), MaxSpeedZone(Kmh(30), "DE", "zone30")),

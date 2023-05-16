@@ -47,6 +47,38 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    @Test fun `tag lit status when given`() {
+        verifyAnswer(
+            mapOf(),
+            MaxspeedAndType(null, ImplicitMaxSpeed("GB", "nsl_single", false)),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:type", "GB:nsl_single"),
+                StringMapEntryAdd("lit", "no")
+            )
+        )
+        verifyAnswer(
+            mapOf(),
+            MaxspeedAndType(null, ImplicitMaxSpeed("GB", "nsl_restricted", true)),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:type", "GB:nsl_restricted"),
+                StringMapEntryAdd("lit", "yes")
+            )
+        )
+    }
+
+    @Test fun `do not modify lit tag if not given`() {
+        verifyAnswer(
+            mapOf("lit" to "yes"),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            arrayOf(StringMapEntryAdd("maxspeed:type", "DE:urban"))
+        )
+        verifyAnswer(
+            mapOf("lit" to "unknown"),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            arrayOf(StringMapEntryAdd("maxspeed:type", "DE:rural"))
+        )
+    }
+
     @Test fun `apply zone maxspeed`() {
         verifyAnswer(
             mapOf(),

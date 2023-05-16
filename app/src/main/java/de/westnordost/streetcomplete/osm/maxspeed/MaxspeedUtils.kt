@@ -44,12 +44,19 @@ fun isImplicitMaxspeed(value: String): Boolean {
     return implicitRegex.matchEntire(value) != null
 }
 
-fun getImplicitMaxspeed(value: String): ImplicitMaxSpeed? {
+fun getImplicitMaxspeed(value: String, tags: Map<String, String>): ImplicitMaxSpeed? {
     val matchResult = implicitRegex.matchEntire(value)
     return if (matchResult != null) {
         val typeSpeed = matchResult.groupValues[2]
         val countryCode = matchResult.groupValues[1]
-        ImplicitMaxSpeed(countryCode, typeSpeed, null)
+        val lit = when {
+            tags["lit"] == null -> null
+            tags["lit"] == "yes" || tags["lit"] == "24/7" -> true
+            tags["lit"] == "no" -> false
+            // null on unknown values
+            else -> null
+        }
+        ImplicitMaxSpeed(countryCode, typeSpeed, lit)
     } else {
         null
     }

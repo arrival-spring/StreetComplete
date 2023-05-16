@@ -1,6 +1,7 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.osm.Tags
+import de.westnordost.streetcomplete.util.ktx.toYesNo
 
 /** Apply the maxspeed and type to the given [tags], with optional [direction], e.g. "forward" for
  *  "maxspeed:forward. */
@@ -77,6 +78,10 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         tags[typeKey] = typeOsmValue
         if (isSignedZone) {
             tags[signedZoneKey] = "sign"
+        }
+        if (type is ImplicitMaxSpeed) {
+            // Lit is either already set or has been answered by the user, so this wouldn't change the value of the lit tag
+            type.lit?.let { tags["lit"] = it.toYesNo() }
         }
     }
 
