@@ -4,7 +4,8 @@ import de.westnordost.streetcomplete.osm.Tags
 import de.westnordost.streetcomplete.util.ktx.toYesNo
 
 /** Apply the maxspeed and type to the given [tags], with optional [direction], e.g. "forward" for
- *  "maxspeed:forward. */
+ *  "maxspeed:forward.
+ *  TODO: extend to forward and backward */
 fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     val dir = if (direction != null) ":$direction" else ""
     val speedKey = "maxspeed$dir"
@@ -82,6 +83,10 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         if (type is ImplicitMaxSpeed) {
             // Lit is either already set or has been answered by the user, so this wouldn't change the value of the lit tag
             type.lit?.let { tags["lit"] = it.toYesNo() }
+        }
+        // If user was shown that it was a school zone and selected something else remove school zone tag
+        if (previousTypeOsmValue == null && tags["hazard"] == "school_zone") {
+            tags.remove("hazard")
         }
     }
 

@@ -490,14 +490,34 @@ class MaxspeedCreatorKtTests {
 
     @Test fun `tag school zone also with an explicit speed limit`() {
         verifyAnswer(
-            mapOf(
-                "highway" to "residential",
-                "maxspeed" to "50"
-            ),
+            mapOf("maxspeed" to "50"),
             MaxspeedAndType(MaxSpeedSign(Kmh(20)), IsSchoolZone),
             arrayOf(
                 StringMapEntryModify("maxspeed", "50", "20"),
                 StringMapEntryAdd("hazard", "school_zone")
+            )
+        )
+    }
+
+    @Test fun `remove school_zone tag if user was shown that it was a school zone and selected something else`() {
+        verifyAnswer(
+            mapOf("hazard" to "school_zone"),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            arrayOf(
+                StringMapEntryDelete("hazard", "school_zone"),
+                StringMapEntryAdd("maxspeed:type", "DE:urban")
+            )
+        )
+        verifyAnswer(
+            mapOf(
+                "hazard" to "school_zone",
+                "maxspeed" to "50"
+            ),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            arrayOf(
+                StringMapEntryDelete("hazard", "school_zone"),
+                StringMapEntryDelete("maxspeed", "50"),
+                StringMapEntryAdd("maxspeed:type", "DE:urban")
             )
         )
     }
