@@ -568,6 +568,26 @@ class MaxspeedParserKtTest {
         )
     }
 
+    /* If there is a road that is both then if we displayed it as a living street then there would
+     * be no way to change the tags to mark it as a school zone */
+    @Test fun `school zone type even if also a living street`() {
+        assertEquals(
+            MaxspeedAndType(null, IsSchoolZone),
+            parse(
+                "hazard" to "school_zone",
+                "highway" to "living_street"
+            )
+        )
+        assertEquals(
+            MaxspeedAndType(null, IsSchoolZone),
+            parse(
+                "hazard" to "school_zone",
+                "highway" to "service",
+                "living_street" to "yes"
+            )
+        )
+    }
+
     @Test fun `not school zone if there is other valid maxspeed type tagging`() {
         assertNotEquals(
             MaxspeedAndType(null, IsSchoolZone),

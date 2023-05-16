@@ -463,6 +463,19 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    @Test fun `mark school zone living street as living street speed limit`() {
+        verifyAnswer(
+            mapOf(
+                "highway" to "living_street",
+                "hazard" to "school_zone"
+            ),
+            MaxspeedAndType(null, LivingStreet("DE")),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:type", "DE:living_street")
+            )
+        )
+    }
+
     /* ----------------------------------- change to school zone -------------------------------- */
 
     /* Unless an explicit speed limit is provided, changing to a  school zone removes all maxspeed

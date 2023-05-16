@@ -93,8 +93,10 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfos: CountryInfos)
     // essentially an implicit maxspeed of themselves
     if (maxspeedType == null) {
         maxspeedType = when {
-            isLivingStreet(tags) -> LivingStreet(null)
+            // Check for school zone first, because if there is a road that is both then if we displayed
+            // it as a living street then there would be no way to change the tags to mark it as a school zone
             isSchoolZone(tags) -> IsSchoolZone
+            isLivingStreet(tags) -> LivingStreet(null)
             else -> null
         }
     }

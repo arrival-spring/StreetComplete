@@ -108,7 +108,11 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         tags.removeMaxspeedTypeTaggingForAllDirections(preserveSourceMaxspeed)
         if (speedOsmValue == null) {
             tags.removeMaxspeedTaggingForAllDirections()
-        } else if (type.countryCode != null) {
+        }
+        // country code should not be null, it will be provided by UI when user selects this
+        // add living_street type if a speed value was given or if it is a school zone (school zone takes
+        // precedence over living street in parsing because there's no speed limit type tag for school zones)
+        if (type.countryCode != null && (speedOsmValue != null || isSchoolZone(tags))) {
             tags[typeKey] = "${type.countryCode}:living_street"
         }
         // Don't change highway type if "living_street" is set
