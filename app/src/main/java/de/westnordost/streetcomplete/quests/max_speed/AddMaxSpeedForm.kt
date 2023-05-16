@@ -22,7 +22,7 @@ import de.westnordost.streetcomplete.databinding.QuestMaxspeedBinding
 import de.westnordost.streetcomplete.databinding.QuestMaxspeedNoSignNoSlowZoneConfirmationBinding
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
-import de.westnordost.streetcomplete.osm.maxspeed.IsLivingStreet
+import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedAnswer
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
@@ -85,7 +85,7 @@ class AddMaxSpeedForm : AbstractOsmQuestForm<MaxSpeedAnswer>() {
                 confirmNoSign { determineImplicitMaxspeedType() }
             }
         } else if (speedType == LIVING_STREET) {
-            applyAnswer(IsLivingStreet)
+            applyAnswer(LivingStreet(countryInfo.countryCode))
         } else if (speedType == NSL) {
             askIsDualCarriageway(
                 onYes = { applyNoSignAnswer("nsl_dual") },

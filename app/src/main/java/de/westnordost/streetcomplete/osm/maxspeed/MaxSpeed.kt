@@ -10,7 +10,7 @@ data class MaxSpeedZone(val value: Speed, val countryCode: String, val roadType:
 data class AdvisorySpeedSign(val value: Speed) : MaxSpeedAnswer
 data class ImplicitMaxSpeed(val countryCode: String, val roadType: String, val lit: Boolean?) :
     MaxSpeedAnswer
-object IsLivingStreet : MaxSpeedAnswer
+data class LivingStreet(val countryCode: String?) : MaxSpeedAnswer
 object IsSchoolZone : MaxSpeedAnswer
 object WalkMaxSpeed : MaxSpeedAnswer
 object MaxSpeedIsNone : MaxSpeedAnswer

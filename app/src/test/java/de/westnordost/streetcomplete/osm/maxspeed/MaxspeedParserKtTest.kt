@@ -466,18 +466,18 @@ class MaxspeedParserKtTest {
 
     @Test fun `living street type`() {
         assertEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet(null)),
             parse("highway" to "living_street")
         )
         assertEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet(null)),
             parse(
                 "highway" to "residential",
                 "living_street" to "yes"
             )
         )
         assertEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet(null)),
             parse(
                 "highway" to "residential",
                 "living_street" to "yes",
@@ -485,7 +485,7 @@ class MaxspeedParserKtTest {
             )
         )
         assertEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet("PL")),
             parse(
                 "highway" to "service",
                 "maxspeed:type" to "PL:living_street"
@@ -495,40 +495,51 @@ class MaxspeedParserKtTest {
 
     @Test fun `not living street type if there is other valid maxspeed tagging`() {
         assertNotEquals(
-            MaxspeedAndType(null, IsLivingStreet),
-            parse(
-                "highway" to "living_street",
-                "maxspeed" to "20"
-            )
-        )
-        assertNotEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet(null)),
             parse(
                 "highway" to "living_street",
                 "maxspeed:type" to "DE:zone20"
             )
         )
         assertNotEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet(null)),
             parse(
                 "highway" to "living_street",
                 "source:maxspeed" to "DE:urban"
             )
         )
         assertNotEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet(null)),
+            parse(
+                "highway" to "residential",
+                "living_street" to "yes",
+                "zone:maxspeed" to "DE:urban"
+            )
+        )
+    }
+
+    @Test fun `living street with explicit speed limit`() {
+        assertEquals(
+            MaxspeedAndType(MaxSpeedSign(Kmh(20)), LivingStreet(null)),
+            parse(
+                "highway" to "living_street",
+                "maxspeed" to "20"
+            )
+        )
+        assertEquals(
+            MaxspeedAndType(MaxSpeedSign(Kmh(20)), LivingStreet(null)),
             parse(
                 "highway" to "residential",
                 "living_street" to "yes",
                 "maxspeed" to "20"
             )
         )
-        assertNotEquals(
-            MaxspeedAndType(null, IsLivingStreet),
+        assertEquals(
+            MaxspeedAndType(WalkMaxSpeed, LivingStreet("DE")),
             parse(
-                "highway" to "residential",
-                "living_street" to "yes",
-                "zone:maxspeed" to "DE:urban"
+                "highway" to "living_street",
+                "maxspeed:type" to "DE:living_street",
+                "maxspeed" to "walk"
             )
         )
     }
@@ -548,16 +559,16 @@ class MaxspeedParserKtTest {
                 "source:maxspeed" to "survey"
             )
         )
-    }
-
-    @Test fun `not school zone if there is other valid maxspeed tagging`() {
-        assertNotEquals(
-            MaxspeedAndType(null, IsSchoolZone),
+        assertEquals(
+            MaxspeedAndType(MaxSpeedSign(Kmh(20)), IsSchoolZone),
             parse(
                 "hazard" to "school_zone",
                 "maxspeed" to "20"
             )
         )
+    }
+
+    @Test fun `not school zone if there is other valid maxspeed type tagging`() {
         assertNotEquals(
             MaxspeedAndType(null, IsSchoolZone),
             parse(

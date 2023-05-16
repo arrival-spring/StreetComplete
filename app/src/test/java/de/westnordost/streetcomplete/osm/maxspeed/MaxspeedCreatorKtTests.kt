@@ -120,7 +120,7 @@ class MaxspeedCreatorKtTests {
     @Test fun `change to living street`() {
         verifyAnswer(
             mapOf("highway" to "residential"),
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet("DE")),
             arrayOf(
                 StringMapEntryModify("highway", "residential", "living_street")
             )
@@ -395,39 +395,40 @@ class MaxspeedCreatorKtTests {
 
     /* ----------------------------------- change to living street ------------------------------ */
 
-    /* Changing to a living street removes all maxspeed and type tagging because we are in the
-     * context of speed limits. So the user was shown the current speed limit and answered that
-     * in fact it is a living street, thereby saying that the speed limit tagged before was wrong. */
+    /* Unless an explicit speed limit is provided, changing to a living street removes all maxspeed
+    *  tagging because we are in the context of speed limits. So the user was shown the current
+    *  speed limit/type and answered that in fact it is a living street, thereby saying that what
+    *  was tagged before was wrong.
+    *  If the user also provides an explicit maxspeed then we tag the type as "xx:living_street"
+    *  to make it clear. */
     @Test fun `changing to living street removes any previous maxspeed and type tagging`() {
         verifyAnswer(
             mapOf(
                 "highway" to "residential",
                 "maxspeed" to "50",
-                "maxspeed:type" to "sign",
                 "source:maxspeed" to "DE:urban"
             ),
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet("DE")),
             arrayOf(
                 StringMapEntryModify("highway", "residential", "living_street"),
                 StringMapEntryDelete("maxspeed", "50"),
-                StringMapEntryDelete("maxspeed:type", "sign"),
                 StringMapEntryDelete("source:maxspeed", "DE:urban")
             )
         )
     }
 
+    // This would not parse as a living street, so the user would not see that it was living street
+    // speed limit before
     @Test fun `living street with other maxspeed tagging to living street type removes previous maxspeed and type tagging`() {
         verifyAnswer(
             mapOf(
                 "highway" to "living_street",
                 "maxspeed" to "50",
-                "maxspeed:type" to "sign",
                 "source:maxspeed" to "DE:urban"
             ),
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet("DE")),
             arrayOf(
                 StringMapEntryDelete("maxspeed", "50"),
-                StringMapEntryDelete("maxspeed:type", "sign"),
                 StringMapEntryDelete("source:maxspeed", "DE:urban")
             )
         )
@@ -439,7 +440,7 @@ class MaxspeedCreatorKtTests {
                 "maxspeed:type" to "sign",
                 "source:maxspeed" to "DE:urban"
             ),
-            MaxspeedAndType(null, IsLivingStreet),
+            MaxspeedAndType(null, LivingStreet("DE")),
             arrayOf(
                 StringMapEntryDelete("maxspeed", "50"),
                 StringMapEntryDelete("maxspeed:type", "sign"),
@@ -448,11 +449,28 @@ class MaxspeedCreatorKtTests {
         )
     }
 
+    @Test fun `living street with explicit speed limit tags living_street as type`() {
+        verifyAnswer(
+            mapOf(
+                "highway" to "living_street",
+                "maxspeed" to "50"
+            ),
+            MaxspeedAndType(WalkMaxSpeed, LivingStreet("DE")),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "50", "walk"),
+                StringMapEntryAdd("maxspeed:type", "DE:living_street")
+            )
+        )
+    }
+
     /* ----------------------------------- change to school zone -------------------------------- */
 
-    /* Changing to a school zone removes all maxspeed and type tagging because we are in the
-     * context of speed limits. So the user was shown the current speed limit and answered that
-     * in fact it is a school zone, thereby saying that the speed limit tagged before was wrong. */
+    /* Unless an explicit speed limit is provided, changing to a  school zone removes all maxspeed
+    *  tagging because we are in the context of speed limits. So the user was shown the current
+    *  speed limit/type and answered that in fact it is a school zone thereby saying that what was
+    *  tagged before was wrong.
+    *  If the user also provides an explicit maxspeed then "hazard=school_zone" suffices for the
+    *  type as there is no accepted type tag for school zones */
     @Test fun `changing to school zone removes any previous maxspeed and type tagging`() {
         verifyAnswer(
             mapOf(
@@ -466,6 +484,20 @@ class MaxspeedCreatorKtTests {
                 StringMapEntryDelete("maxspeed", "50"),
                 StringMapEntryDelete("maxspeed:type", "sign"),
                 StringMapEntryDelete("source:maxspeed", "DE:urban")
+            )
+        )
+    }
+
+    @Test fun `tag school zone also with an explicit speed limit`() {
+        verifyAnswer(
+            mapOf(
+                "highway" to "residential",
+                "maxspeed" to "50"
+            ),
+            MaxspeedAndType(MaxSpeedSign(Kmh(20)), IsSchoolZone),
+            arrayOf(
+                StringMapEntryModify("maxspeed", "50", "20"),
+                StringMapEntryAdd("hazard", "school_zone")
             )
         )
     }

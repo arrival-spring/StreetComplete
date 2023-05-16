@@ -8,7 +8,7 @@ import de.westnordost.streetcomplete.data.user.achievements.EditTypeAchievement.
 import de.westnordost.streetcomplete.osm.Tags
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
-import de.westnordost.streetcomplete.osm.maxspeed.IsLivingStreet
+import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
 import de.westnordost.streetcomplete.osm.maxspeed.MAXSPEED_TYPE_KEYS
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedAnswer
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
@@ -57,7 +57,7 @@ class AddMaxSpeed : OsmFilterQuestType<MaxSpeedAnswer>() {
                 tags["maxspeed:advisory"] = answer.value.toString()
                 tags["maxspeed:type:advisory"] = "sign"
             }
-            is IsLivingStreet -> {
+            is LivingStreet -> {
                 tags["highway"] = "living_street"
             }
             is ImplicitMaxSpeed -> {

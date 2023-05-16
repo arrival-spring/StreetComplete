@@ -92,13 +92,20 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         tags[speedKey] = speedOsmValue
     }
 
-    // Changing to a living street or school zone removes all maxspeed and type tagging because we
-    // are in the context of speed limits. So the user was shown the current speed limit and
-    // answered that in fact it is a living street/school zone, thereby saying that the speed limit
-    // tagged before was wrong.
-    if (type == IsLivingStreet) {
-        tags.removeMaxspeedTaggingForAllDirections()
+    // Unless an explicit speed limit is provided, changing to a living street or school zone
+    // removes all maxspeed tagging because we are in the context of speed limits. So the user was
+    // shown the current speed limit/type and answered that in fact it is a living street/school
+    // zone, thereby saying that what was tagged before was wrong.
+    // If the user also provides an explicit maxspeed then we tag the type as "xx:living_street"
+    // to make it clear. There is no equivalent accepted tag for school zones, so
+    // "hazard=school_zone" suffices
+    if (type is LivingStreet) {
         tags.removeMaxspeedTypeTaggingForAllDirections(preserveSourceMaxspeed)
+        if (speedOsmValue == null) {
+            tags.removeMaxspeedTaggingForAllDirections()
+        } else if (type.countryCode != null) {
+            tags[typeKey] = "${type.countryCode}:living_street"
+        }
         // Don't change highway type if "living_street" is set
         if (tags["highway"] != "living_street" && tags["living_street"] != "yes") {
             tags["highway"] = "living_street"
@@ -108,7 +115,9 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         }
     }
     if (type == IsSchoolZone) {
-        tags.removeMaxspeedTaggingForAllDirections()
+        if (speedOsmValue == null) {
+            tags.removeMaxspeedTaggingForAllDirections()
+        }
         tags.removeMaxspeedTypeTaggingForAllDirections(preserveSourceMaxspeed)
         tags["hazard"] = "school_zone"
     }

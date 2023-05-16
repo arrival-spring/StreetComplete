@@ -4,7 +4,7 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
-import de.westnordost.streetcomplete.osm.maxspeed.IsLivingStreet
+import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
 import de.westnordost.streetcomplete.quests.verifyAnswer
@@ -56,7 +56,7 @@ class AddMaxSpeedTest {
     @Test fun `apply living street answer`() {
         questType.verifyAnswer(
             mapOf("highway" to "residential"),
-            IsLivingStreet,
+            LivingStreet(null),
             StringMapEntryModify("highway", "residential", "living_street")
         )
     }
