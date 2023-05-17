@@ -8,8 +8,7 @@ data class MaxSpeedSign(val value: Speed) : MaxSpeedAnswer
 data class MaxSpeedZone(val value: Speed, val countryCode: String, val roadType: String) :
     MaxSpeedAnswer
 data class AdvisorySpeedSign(val value: Speed) : MaxSpeedAnswer
-data class ImplicitMaxSpeed(val countryCode: String, val roadType: String, val lit: Boolean?) :
-    MaxSpeedAnswer
+data class ImplicitMaxSpeed(val countryCode: String, val roadType: RoadType, val lit: Boolean?) : MaxSpeedAnswer
 data class LivingStreet(val countryCode: String?) : MaxSpeedAnswer
 object IsSchoolZone : MaxSpeedAnswer
 object WalkMaxSpeed : MaxSpeedAnswer
@@ -34,7 +33,7 @@ fun MaxSpeedAnswer.toTypeOsmValue(): String? {
         is MaxSpeedSign -> "sign"
         is JustSign -> "sign"
         is MaxSpeedZone -> this.countryCode + ":" + this.roadType
-        is ImplicitMaxSpeed -> this.countryCode + ":" + this.roadType
+        is ImplicitMaxSpeed -> this.countryCode + ":" + this.roadType.osmValue
         else -> null
     }
 }

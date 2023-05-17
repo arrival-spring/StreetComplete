@@ -2,6 +2,7 @@ package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfos
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
+import de.westnordost.streetcomplete.osm.surface.Surface
 import de.westnordost.streetcomplete.quests.max_speed.Kmh
 import de.westnordost.streetcomplete.quests.max_speed.Mph
 
@@ -35,6 +36,13 @@ val VEHICLE_TYPES = setOf(
     "hazmat"
 )
 
+// Everything with more than 1000 uses at the time which is not an actual type or a special comment
+// These will only be removed when the type is changed
+val SOURCE_MAXSPEED_VALUES_THAT_CAN_BE_REMOVED = setOf(
+    "Bing", "DNIT", "implicit", "knowledge", "Mapillary", "mapillary", "markings", "massgis",
+    "OpenStreetCam", "state_limit", "Stats19", "survey", "survey;image", "traffic_sign"
+)
+
 private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.*)")
 private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?([0-9]+)")
 private val livingStreetRegex = Regex("([A-Z-]+-?[A-Z]*):(?:living_street)?")
@@ -51,12 +59,14 @@ fun getImplicitMaxspeed(value: String, tags: Map<String, String>): ImplicitMaxSp
         val countryCode = matchResult.groupValues[1]
         val lit = when {
             tags["lit"] == null -> null
-            tags["lit"] == "yes" || tags["lit"] == "24/7" -> true
+            tags["lit"] == "yes" -> true
             tags["lit"] == "no" -> false
             // null on unknown values
             else -> null
         }
-        ImplicitMaxSpeed(countryCode, typeSpeed, lit)
+        val roadType = RoadType.values().find { it.osmValue == typeSpeed } ?: RoadType.UNKNOWN
+
+        ImplicitMaxSpeed(countryCode, roadType, lit)
     } else {
         null
     }

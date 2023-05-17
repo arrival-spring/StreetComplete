@@ -26,6 +26,8 @@ import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedAnswer
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
+import de.westnordost.streetcomplete.osm.maxspeed.RoadType
+import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.quests.AbstractOsmQuestForm
 import de.westnordost.streetcomplete.quests.AnswerItem
 import de.westnordost.streetcomplete.quests.max_speed.SpeedType.ADVISORY
@@ -88,8 +90,8 @@ class AddMaxSpeedForm : AbstractOsmQuestForm<MaxSpeedAnswer>() {
             applyAnswer(LivingStreet(countryInfo.countryCode))
         } else if (speedType == NSL) {
             askIsDualCarriageway(
-                onYes = { applyNoSignAnswer("nsl_dual") },
-                onNo = { applyNoSignAnswer("nsl_single") }
+                onYes = { applyNoSignAnswer(NSL_DUAL) },
+                onNo = { applyNoSignAnswer(NSL_SINGLE) }
             )
         } else if (userSelectedUnusualSpeed()) {
             confirmUnusualInput { applySpeedLimitFormAnswer() }
@@ -249,26 +251,27 @@ class AddMaxSpeedForm : AbstractOsmQuestForm<MaxSpeedAnswer>() {
 
     private fun determineImplicitMaxspeedType() {
         val highwayTag = element.tags["highway"]!!
+        val roadType = RoadType.values().find { it.osmValue == highwayTag }!!
         if (countryInfo.countryCode == "GB") {
             if (ROADS_WITH_DEFINITE_SPEED_LIMIT_GB.contains(highwayTag)) {
-                applyNoSignAnswer(highwayTag)
+                applyNoSignAnswer(roadType)
             } else {
                 askIsDualCarriageway(
-                    onYes = { applyNoSignAnswer("nsl_dual") },
+                    onYes = { applyNoSignAnswer(NSL_DUAL) },
                     onNo = {
                         determineLit(
-                            onYes = { applyNoSignAnswer("nsl_restricted", true) },
-                            onNo = { applyNoSignAnswer("nsl_single", false) }
+                            onYes = { applyNoSignAnswer(NSL_RESTRICTED, true) },
+                            onNo = { applyNoSignAnswer(NSL_SINGLE, false) }
                         )
                     }
                 )
             }
         } else if (ROADS_WITH_DEFINITE_SPEED_LIMIT.contains(highwayTag)) {
-            applyNoSignAnswer(highwayTag)
+            applyNoSignAnswer(roadType)
         } else {
             askUrbanOrRural(
-                onUrban = { applyNoSignAnswer("urban") },
-                onRural = { applyNoSignAnswer("rural") }
+                onUrban = { applyNoSignAnswer(URBAN) },
+                onRural = { applyNoSignAnswer(RURAL) }
             )
         }
     }
@@ -313,7 +316,7 @@ class AddMaxSpeedForm : AbstractOsmQuestForm<MaxSpeedAnswer>() {
         }
     }
 
-    private fun applyNoSignAnswer(roadType: String, lit: Boolean? = null) {
+    private fun applyNoSignAnswer(roadType: RoadType, lit: Boolean? = null) {
         applyAnswer(ImplicitMaxSpeed(countryInfo.countryCode, roadType, lit))
     }
 

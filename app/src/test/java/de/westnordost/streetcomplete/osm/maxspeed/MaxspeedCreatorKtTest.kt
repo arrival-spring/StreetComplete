@@ -5,12 +5,13 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryChange
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryDelete
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
+import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.quests.max_speed.Kmh
 import de.westnordost.streetcomplete.quests.max_speed.Mph
 import org.assertj.core.api.Assertions
 import org.junit.Test
 
-class MaxspeedCreatorKtTests {
+class MaxspeedCreatorKtTest {
     @Test fun `apply nothing applies nothing`() {
         verifyAnswer(
             mapOf(),
@@ -37,12 +38,12 @@ class MaxspeedCreatorKtTests {
     @Test fun `apply plain maxspeed type`() {
         verifyAnswer(
             mapOf(),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(StringMapEntryAdd("maxspeed:type", "DE:urban"))
         )
         verifyAnswer(
             mapOf(),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null)),
             arrayOf(StringMapEntryAdd("maxspeed:type", "DE:rural"))
         )
     }
@@ -50,7 +51,7 @@ class MaxspeedCreatorKtTests {
     @Test fun `tag lit status when given`() {
         verifyAnswer(
             mapOf(),
-            MaxspeedAndType(null, ImplicitMaxSpeed("GB", "nsl_single", false)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("GB", NSL_SINGLE, false)),
             arrayOf(
                 StringMapEntryAdd("maxspeed:type", "GB:nsl_single"),
                 StringMapEntryAdd("lit", "no")
@@ -58,7 +59,7 @@ class MaxspeedCreatorKtTests {
         )
         verifyAnswer(
             mapOf(),
-            MaxspeedAndType(null, ImplicitMaxSpeed("GB", "nsl_restricted", true)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("GB", NSL_RESTRICTED, true)),
             arrayOf(
                 StringMapEntryAdd("maxspeed:type", "GB:nsl_restricted"),
                 StringMapEntryAdd("lit", "yes")
@@ -69,12 +70,12 @@ class MaxspeedCreatorKtTests {
     @Test fun `do not modify lit tag if not given`() {
         verifyAnswer(
             mapOf("lit" to "yes"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(StringMapEntryAdd("maxspeed:type", "DE:urban"))
         )
         verifyAnswer(
             mapOf("lit" to "unknown"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null)),
             arrayOf(StringMapEntryAdd("maxspeed:type", "DE:rural"))
         )
     }
@@ -157,12 +158,12 @@ class MaxspeedCreatorKtTests {
     @Test fun `change maxspeed type from one implicit value to another`() {
         verifyAnswer(
             mapOf("maxspeed:type" to "DE:urban"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null)),
             arrayOf(StringMapEntryModify("maxspeed:type", "DE:urban", "DE:rural"))
         )
         verifyAnswer(
             mapOf("maxspeed:type" to "DE:motorway"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null)),
             arrayOf(StringMapEntryModify("maxspeed:type", "DE:motorway", "DE:rural"))
         )
     }
@@ -173,7 +174,7 @@ class MaxspeedCreatorKtTests {
                 "maxspeed" to "40",
                 "maxspeed:type" to "sign"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
                 StringMapEntryDelete("maxspeed", "40"),
                 StringMapEntryModify("maxspeed:type", "sign", "DE:urban")
@@ -184,7 +185,7 @@ class MaxspeedCreatorKtTests {
     @Test fun `change zone maxspeed to implicit maxspeed`() {
         verifyAnswer(
             mapOf("maxspeed:type" to "DE:zone30"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed:type", "DE:zone30", "DE:urban")
             )
@@ -194,7 +195,7 @@ class MaxspeedCreatorKtTests {
                 "maxspeed:type" to "DE:zone30",
                 "maxspeed" to "30"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed:type", "DE:zone30", "DE:urban"),
                 StringMapEntryDelete("maxspeed", "30")
@@ -515,7 +516,7 @@ class MaxspeedCreatorKtTests {
     @Test fun `remove school_zone tag if user was shown that it was a school zone and selected something else`() {
         verifyAnswer(
             mapOf("hazard" to "school_zone"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
                 StringMapEntryDelete("hazard", "school_zone"),
                 StringMapEntryAdd("maxspeed:type", "DE:urban")
@@ -526,7 +527,7 @@ class MaxspeedCreatorKtTests {
                 "hazard" to "school_zone",
                 "maxspeed" to "50"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
                 StringMapEntryDelete("hazard", "school_zone"),
                 StringMapEntryDelete("maxspeed", "50"),
@@ -540,55 +541,46 @@ class MaxspeedCreatorKtTests {
     @Test fun `respect previously used type tag`() {
         verifyAnswer(
             mapOf("source:maxspeed" to "sign"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(StringMapEntryModify("source:maxspeed", "sign", "DE:urban"))
         )
         verifyAnswer(
             mapOf("zone:maxspeed" to "DE:rural"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(StringMapEntryModify("zone:maxspeed", "DE:rural", "DE:urban"))
         )
         verifyAnswer(
             mapOf("zone:traffic" to "DE:rural"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(StringMapEntryModify("zone:traffic", "DE:rural", "DE:urban"))
         )
     }
 
-    @Test fun `do not use source_maxspeed if previous value was not a maxspeed type`() {
+    @Test fun `do not use source_maxspeed if previous value was not a maxspeed type, but preserve special values`() {
         verifyAnswer(
             mapOf(
-                "source:maxspeed" to "survey",
+                "source:maxspeed" to "25 unless otherwise posted",
                 "maxspeed" to "60"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
                 StringMapEntryDelete("maxspeed", "60"),
                 StringMapEntryAdd("maxspeed:type", "DE:urban")
             )
         )
+    }
+
+    @Test fun `remove source_maxspeed if it is actual source value`() {
         verifyAnswer(
             mapOf(
                 "source:maxspeed" to "survey",
-                "zone:maxspeed" to "DE:30",
-                "maxspeed" to "30"
-            ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
-            arrayOf(
-                StringMapEntryDelete("maxspeed", "30"),
-                StringMapEntryModify("zone:maxspeed", "DE:30", "DE:urban")
-            )
-        )
-        verifyAnswer(
-            mapOf(
-                "source:maxspeed" to "survey",
-                "zone:traffic" to "DE:rural",
                 "maxspeed" to "60"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
+                StringMapEntryDelete("source:maxspeed", "survey"),
                 StringMapEntryDelete("maxspeed", "60"),
-                StringMapEntryModify("zone:traffic", "DE:rural", "DE:urban")
+                StringMapEntryAdd("maxspeed:type", "DE:urban")
             )
         )
     }
@@ -617,7 +609,7 @@ class MaxspeedCreatorKtTests {
     @Test fun `use maxspeed for type if it was used before`() {
         verifyAnswer(
             mapOf("maxspeed" to "RU:urban"),
-            MaxspeedAndType(null, ImplicitMaxSpeed("RU", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("RU", RURAL, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed", "RU:urban", "RU:rural")
             )
@@ -630,7 +622,7 @@ class MaxspeedCreatorKtTests {
                 "maxspeed" to "RU:zone30",
                 "maxspeed:type" to "sign"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("RU", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("RU", RURAL, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed", "RU:zone30", "RU:rural"),
                 StringMapEntryDelete("maxspeed:type", "sign")
@@ -663,7 +655,7 @@ class MaxspeedCreatorKtTests {
     @Test fun `do not keep using maxspeed for type if adding both explicit and type`() {
         verifyAnswer(
             mapOf("maxspeed" to "RU:urban"),
-            MaxspeedAndType(MaxSpeedSign(Kmh(50)), ImplicitMaxSpeed("RU", "rural", null)),
+            MaxspeedAndType(MaxSpeedSign(Kmh(50)), ImplicitMaxSpeed("RU", RURAL, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed", "RU:urban", "50"),
                 StringMapEntryAdd("maxspeed:type", "RU:rural")
@@ -732,7 +724,7 @@ class MaxspeedCreatorKtTests {
                 "maxspeed:hgv_articulated:lanes" to "60||",
                 "maxspeed:coach:forward:lanes:conditional" to "50|| @ (10:00-11:00)"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "urban", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
             arrayOf(
                 StringMapEntryAdd("maxspeed:type", "DE:urban"),
                 StringMapEntryDelete("maxspeed", "100"),
@@ -753,7 +745,7 @@ class MaxspeedCreatorKtTests {
                 "zone:traffic" to "DE:urban",
                 "zone:maxspeed" to "DE:urban"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed:type", "DE:urban", "DE:rural"),
                 StringMapEntryDelete("zone:traffic", "DE:urban"),
@@ -767,7 +759,7 @@ class MaxspeedCreatorKtTests {
                 "zone:traffic" to "DE:rural",
                 "zone:maxspeed" to "DE:30"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed:type", "DE:urban", "DE:rural"),
                 StringMapEntryDelete("source:maxspeed", "DE:motorway"),
@@ -781,7 +773,7 @@ class MaxspeedCreatorKtTests {
                 "maxspeed:type:forward" to "DE:urban",
                 "maxspeed:type:backward" to "DE:rural"
             ),
-            MaxspeedAndType(null, ImplicitMaxSpeed("DE", "rural", null)),
+            MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null)),
             arrayOf(
                 StringMapEntryModify("maxspeed:type", "DE:urban", "DE:rural"),
                 StringMapEntryDelete("maxspeed:type:forward", "DE:urban"),

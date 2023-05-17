@@ -1,5 +1,6 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
+import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.osm.Tags
 import de.westnordost.streetcomplete.util.ktx.toYesNo
 
@@ -20,13 +21,16 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     }
 
     // Preserve "source:maxspeed" if it exists and is not a valid maxspeed type
-    val preserveSourceMaxspeed = tags["source:maxspeed$dir"] != null && !isValidMaxspeedType(tags["source:maxspeed$dir"])
+    val preserveSourceMaxspeed =
+        tags["source:maxspeed$dir"] != null &&
+        !isValidMaxspeedType(tags["source:maxspeed$dir"]) &&
+        !SOURCE_MAXSPEED_VALUES_THAT_CAN_BE_REMOVED.contains(tags["source:maxspeed$dir"])
 
     // Take a single type key in this order of preference
     val previousTypeKey = when {
         // Use "maxspeed" for type if it was used before and there is no numerical speed limit to tag
         isValidMaxspeedType(tags["maxspeed$dir"]) && explicit == null -> "maxspeed$dir"
-        // the only way we should have signed zone is if was like that before
+        // the only way we should have a signed zone is if was like that before
         isSignedZone ->  "maxspeed$dir"
         tags.containsKey("maxspeed:type$dir") -> "maxspeed:type$dir"
         // Only take "source:maxspeed" if is a valid type (not actually being used as "source")
@@ -62,6 +66,11 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
         explicit?.toTypeOsmValue()
     } else {
         type?.toTypeOsmValue()
+    }
+
+    // TODO put this somewhere else or deal with it better
+    if (type is ImplicitMaxSpeed && type.roadType == UNKNOWN) {
+        throw IllegalStateException("Attempting to tag unknown road type")
     }
 
     // maxspeed is now not set
