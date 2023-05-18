@@ -2,6 +2,15 @@ package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.quests.max_speed.Speed
 
+data class ForwardAndBackwardMaxspeedAndType(val forward: MaxspeedAndType?, val backward: MaxspeedAndType?)
+
+data class MaxspeedAndType(val explicit: MaxSpeedAnswer?, val type: MaxSpeedAnswer?)
+
+// TODO: this
+// fun MaxspeedAndType.isValidInBothDirections(): Boolean =
+//     type in listOf(MaxSpeedSign, AdvisorySpeedSign, ImplicitMaxSpeed, WalkMaxSpeed)
+// to not include living street, school zone...
+
 sealed interface MaxSpeedAnswer
 
 data class MaxSpeedSign(val value: Speed) : MaxSpeedAnswer
@@ -16,8 +25,6 @@ object WalkMaxSpeed : MaxSpeedAnswer
 object MaxSpeedIsNone : MaxSpeedAnswer
 object JustSign : MaxSpeedAnswer
 object Invalid : MaxSpeedAnswer
-
-data class MaxspeedAndType(val explicit: MaxSpeedAnswer?, val type: MaxSpeedAnswer?)
 
 fun MaxSpeedAnswer.toSpeedOsmValue(): String? {
     return when (this) {
@@ -35,6 +42,7 @@ fun MaxSpeedAnswer.toTypeOsmValue(): String? {
         is JustSign -> "sign"
         is MaxSpeedZone -> this.countryCode + ":" + this.roadType
         is ImplicitMaxSpeed -> this.countryCode + ":" + this.roadType.osmValue
+        is LivingStreet -> this.countryCode + ":" + "living_street"
         else -> null
     }
 }
@@ -45,4 +53,17 @@ fun MaxSpeedAnswer.toTypeOsmValueZoneMaxspeed(): String? {
         is MaxSpeedZone -> this.countryCode + ":" + this.value.toValue()
         else -> toTypeOsmValue()
     }
+}
+
+enum class RoadType(val osmValue: String?) {
+    RURAL("rural"),
+    URBAN("urban"),
+    MOTORWAY("motorway"),
+    TRUNK("trunk"),
+    LIVING_STREET("living_street"),
+    BICYCLE_ROAD("bicycle_road"),
+    NSL_SINGLE("nsl_single"),
+    NSL_DUAL("nsl_dual"),
+    NSL_RESTRICTED("nsl_restricted"),
+    UNKNOWN(null)
 }

@@ -26,3 +26,25 @@ fun Tags.mergeSides(key: String, postfix: String? = null) {
         remove("$key:right$post")
     }
 }
+
+fun Tags.expandDirections(key: String, postfix: String? = null) {
+    val post = if (postfix != null) ":$postfix" else ""
+    val both = get("$key$post")
+    if (both != null) {
+        // *:forward/backward is seen as more specific/correct in case the two contradict each other
+        if (!containsKey("$key:forward$post")) set("$key:forward$post", both)
+        if (!containsKey("$key:backward$post")) set("$key:backward$post", both)
+    }
+    remove("$key$post")
+}
+
+fun Tags.mergeDirections(key: String, postfix: String? = null) {
+    val post = if (postfix != null) ":$postfix" else ""
+    val forward = get("$key:forward$post")
+    val backward = get("$key:backward$post")
+    if (forward != null && forward == backward) {
+        set("$key$post", forward)
+        remove("$key:forward$post")
+        remove("$key:backward$post")
+    }
+}

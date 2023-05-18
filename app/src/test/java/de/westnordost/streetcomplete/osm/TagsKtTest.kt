@@ -99,4 +99,83 @@ class TagsKtTest {
             tags.toMap()
         )
     }
+
+    @Test fun `expand directions`() {
+        val tags = Tags(mapOf("a" to "blub"))
+        tags.expandDirections("a")
+        assertEquals(
+            mapOf("a:forward" to "blub", "a:backward" to "blub"),
+            tags.toMap()
+        )
+    }
+
+    @Test fun `when expanding directions, explicit tag takes precedence over bare tag`() {
+        val tags = Tags(mapOf("a" to "blub", "a:forward" to "burg"))
+        tags.expandDirections("a")
+        assertEquals(
+            mapOf("a:forward" to "burg", "a:backward" to "blub"),
+            tags.toMap()
+        )
+    }
+
+    @Test fun `when expanding directions, does not overwrite forward and backward tags`() {
+        val tags = Tags(mapOf("a" to "gah", "a:forward" to "fo", "a:backward" to "ba"))
+        tags.expandDirections("a")
+        assertEquals(
+            mapOf("a:forward" to "fo", "a:backward" to "ba"),
+            tags.toMap()
+        )
+    }
+
+    @Test fun `don't expand unrelated tags directions`() {
+        val tags = Tags(mapOf("abc:both" to "blub"))
+        tags.expandDirections("a")
+        assertEquals(
+            mapOf("abc:both" to "blub"),
+            tags.toMap()
+        )
+    }
+
+    @Test fun `expand directions with postfix`() {
+        val tags = Tags(mapOf("a:c" to "blarg"))
+        tags.expandDirections("a", "c")
+        assertEquals(
+            mapOf("a:forward:c" to "blarg", "a:backward:c" to "blarg"),
+            tags.toMap()
+        )
+    }
+
+    @Test fun `merge directions`() {
+        val tags = Tags(mapOf("a:forward" to "blub", "a:backward" to "blub"))
+        tags.mergeDirections("a")
+        assertEquals(
+            mapOf("a" to "blub"),
+            tags.toMap()
+        )
+    }
+
+    @Test fun `merge directions only merges if both are the same`() {
+        val tags = Tags(mapOf("a:forward" to "blub"))
+        tags.mergeDirections("a")
+        assertEquals(
+            mapOf("a:forward" to "blub"),
+            tags.toMap()
+        )
+
+        val tags2 = Tags(mapOf("a:forward" to "blub", "a:backward" to "blab"))
+        tags2.mergeDirections("a")
+        assertEquals(
+            mapOf("a:forward" to "blub", "a:backward" to "blab"),
+            tags2.toMap()
+        )
+    }
+
+    @Test fun `merge directions overwrites previous both tag`() {
+        val tags = Tags(mapOf("a:forward" to "blub", "a:backward" to "blub", "a" to "old"))
+        tags.mergeDirections("a")
+        assertEquals(
+            mapOf("a" to "blub"),
+            tags.toMap()
+        )
+    }
 }
