@@ -112,14 +112,19 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     // to make it clear. There is no equivalent accepted tag for school zones, so
     // "hazard=school_zone" suffices
     if (type is LivingStreet) {
+        // Living streets define the whole street, so it does not make sense to have a living street
+        // speed limit in one direction and something else in the other direction
+        if (direction != null) {
+            throw IllegalStateException("Attempting to tag living street in only one direction")
+        }
         tags.removeMaxspeedTypeTaggingForAllDirections(preserveSourceMaxspeed)
         if (speedOsmValue == null) {
             tags.removeMaxspeedTaggingForAllDirections()
         }
-        // country code should not be null, it will be provided by UI when user selects this
-        // add living_street type if a speed value was given or if it is a school zone (school zone takes
+        // Country code should not be null, it will be provided by UI when user selects this
+        // Add living_street type if a speed value was given or if it is a school zone (school zone takes
         // precedence over living street in parsing because there's no speed limit type tag for school zones)
-        if (type.countryCode != null && (speedOsmValue != null || isSchoolZone(tags))) {
+        if ( type.countryCode != null && (speedOsmValue != null || isSchoolZone(tags)) ) {
             tags[typeKey] = "${type.countryCode}:living_street"
         }
         // Don't change highway type if "living_street" is set
@@ -135,7 +140,7 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
             tags.removeMaxspeedTaggingForAllDirections()
         }
         tags.removeMaxspeedTypeTaggingForAllDirections(preserveSourceMaxspeed)
-        tags["hazard"] = "school_zone"
+        tags["hazard$dir"] = "school_zone"
     }
 }
 
