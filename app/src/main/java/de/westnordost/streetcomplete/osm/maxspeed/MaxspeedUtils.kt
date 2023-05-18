@@ -36,11 +36,20 @@ val VEHICLE_TYPES = setOf(
     "hazmat"
 )
 
-// Everything with more than 1000 uses at the time which is not an actual type or a special comment
+// Everything with more than 500 uses at the time which is not an actual type or a special comment
 // These will only be removed when the type is changed
 val SOURCE_MAXSPEED_VALUES_THAT_CAN_BE_REMOVED = setOf(
-    "Bing", "DNIT", "implicit", "knowledge", "Mapillary", "mapillary", "markings", "massgis",
-    "OpenStreetCam", "state_limit", "Stats19", "survey", "survey;image", "traffic_sign"
+    "Bing", "DNIT", "implicit", "knowledge", "local_knowledge", "Mapillary", "mapillary", "markings", "massgis",
+    "OpenStreetCam", "state_limit", "Stats19", "survey", "survey;image", "traffic_sign", "traffic_zone",
+    "FDOT \"Maximum Speed Limits\" GIS data, updated August 27, 2011: http://www.dot.state.fl.us/planning/statistics/gis/roaddata.shtm",
+    "http://monolitos.montevideo.gub.uy/resoluci.nsf/WEB/Numero/954-13",
+    "THE HAMMERSMITH AND FULHAM (20 MPH SPEED LIMIT) EXPERIMENTAL TRAFFIC ORDER 2016",
+    "default residential speed limit in Australia", "Sapulpa Sec. 15-401", "PDDUA-PMPA", "MMDA",
+    "Stats19 2010-2012", "Arrêté du maire, date d'effet 1/2/2021", "BDOrtho IGN", "survey 2014-06-14",
+    "passage à 30km/h sur la commune de Colombes le 1/12/2021", "California vehicle code 22352",
+    "Digiroad.fi", "THE CROYDON (20MPH SPEED LIMIT) (NO.2) TRAFFIC ORDER 2016",
+    "https://data-atgis.opendata.arcgis.com/datasets/d43c489e7027489b88bcdedffc3be6c6_3/data",
+    "CDOT", "Speed Limits Bylaw 2020", "http://www.txdot.gov/safety/speed_limit/75mph.htm"
 )
 
 private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.*)")
