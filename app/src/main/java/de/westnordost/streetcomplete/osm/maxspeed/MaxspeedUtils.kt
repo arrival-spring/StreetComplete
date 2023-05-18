@@ -1,8 +1,8 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
+import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.CountryInfos
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
-import de.westnordost.streetcomplete.osm.surface.Surface
 import de.westnordost.streetcomplete.quests.max_speed.Kmh
 import de.westnordost.streetcomplete.quests.max_speed.Mph
 
@@ -88,12 +88,12 @@ fun isZoneMaxspeed(value: String): Boolean {
 /* Needs to know the country code because MaxSpeedZone contains a Speed, which requires units.
  * (At the moment) there are no countries which have both maxspeed zones and a mixture of speed
  * units (per country_metadata). */
-fun getZoneMaxspeed(value: String, countryInfos: CountryInfos): MaxSpeedZone? {
+fun getZoneMaxspeed(value: String, countryInfo: CountryInfo): MaxSpeedZone? {
     val matchResult = zoneRegex.matchEntire(value)
     if (matchResult != null) {
         val zoneSpeed = matchResult.groupValues[2].toIntOrNull()
         val countryCode = matchResult.groupValues[1]
-        val speedUnit = countryInfos.get(listOf(countryCode)).speedUnits.first()
+        val speedUnit = countryInfo.speedUnits.first()
         if (zoneSpeed != null) {
             val speed = when (speedUnit) {
                 SpeedMeasurementUnit.MILES_PER_HOUR -> Mph(zoneSpeed)

@@ -60,12 +60,10 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
     val speedOsmValue = explicit?.toSpeedOsmValue() ?: type?.toSpeedOsmValue()
 
     // zone:maxspeed takes a different format for zone tagging
-    val typeOsmValue = if (typeKey == "zone:maxspeed$dir") {
-        type?.toTypeOsmValueZoneMaxspeed()
-    } else if (isSignedZone) {
-        explicit?.toTypeOsmValue()
-    } else {
-        type?.toTypeOsmValue()
+    val typeOsmValue = when {
+        typeKey == "zone:maxspeed$dir" -> type?.toTypeOsmValueZoneMaxspeed()
+        isSignedZone -> explicit?.toTypeOsmValue()
+        else -> type?.toTypeOsmValue()
     }
 
     // TODO put this somewhere else or deal with it better
@@ -93,7 +91,7 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null) {
             // Lit is either already set or has been answered by the user, so this wouldn't change the value of the lit tag
             type.lit?.let { tags["lit"] = it.toYesNo() }
         }
-        // If user was shown that it was a school zone and selected something else remove school zone tag
+        // If user was shown that it was a school zone and selected something else, remove school zone tag
         if (previousTypeOsmValue == null && tags["hazard"] == "school_zone") {
             tags.remove("hazard")
         }
