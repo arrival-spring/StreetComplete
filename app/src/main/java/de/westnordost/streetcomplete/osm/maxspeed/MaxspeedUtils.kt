@@ -85,9 +85,9 @@ fun isZoneMaxspeed(value: String): Boolean {
     return zoneRegex.matchEntire(value) != null
 }
 
-/* Needs to know the country code because MaxSpeedZone contains a Speed, which requires units.
- * (At the moment) there are no countries which have both maxspeed zones and a mixture of speed
- * units (per country_metadata). */
+/** Needs to know the country code because MaxSpeedZone contains a Speed, which requires units.
+ *  (At the moment) there are no countries which have both maxspeed zones and a mixture of speed
+ *  units (per country_metadata). */
 fun getZoneMaxspeed(value: String, countryInfo: CountryInfo): MaxSpeedZone? {
     val matchResult = zoneRegex.matchEntire(value)
     if (matchResult != null) {
@@ -115,22 +115,22 @@ fun isValidMaxspeedType(value: String?): Boolean {
     else isImplicitMaxspeed(value) || isZoneMaxspeed(value) || value == "sign"
 }
 
-fun maxspeedIsNone(tags: Map<String, String>): Boolean {
-    return tags["maxspeed"] == "none"
+fun maxspeedIsNone(value: String?): Boolean {
+    return value == "none"
 }
 
-fun maxspeedIsWalk(tags: Map<String, String>): Boolean {
-    return tags["maxspeed"] == "walk"
+fun maxspeedIsWalk(value: String?): Boolean {
+    return value == "walk"
 }
 
 fun isInMph(value: String): Boolean {
     return mphRegex.matchEntire(value) != null
 }
 
-fun getMaxspeedinMph(tags: Map<String, String>): Float? {
-    val speed = tags["maxspeed"] ?: return null
-    return if (speed.endsWith(" mph")) {
-        return speed.substring(0, speed.length - 4).toFloatOrNull()
+fun getMaxspeedinMph(value: String?): Float? {
+    if (value == null) return null
+    return if (value.endsWith(" mph")) {
+        return value.substring(0, value.length - 4).toFloatOrNull()
     } else null
 }
 
@@ -153,11 +153,15 @@ fun getCountryCodeFromMaxspeedType(value: String): String? {
 /** Functions to get speed in km/h from tags */
 
 fun getMaxspeedInKmh(tags: Map<String, String>): Float? {
-    val speed = tags["maxspeed"] ?: return null
-    return if (speed.endsWith(" mph")) {
-        getMaxspeedinMph(tags)
+    return getMaxspeedInKmh(tags["maxspeed"])
+}
+
+fun getMaxspeedInKmh(value: String?): Float? {
+    if (value == null) return null
+    return if (value.endsWith(" mph")) {
+        (getMaxspeedinMph(value)?.times(1.609344f))
     } else {
-        speed.toFloatOrNull()
+        value.toFloatOrNull()
     }
 }
 

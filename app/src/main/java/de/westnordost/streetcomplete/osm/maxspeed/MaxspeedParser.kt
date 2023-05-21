@@ -6,24 +6,66 @@ import de.westnordost.streetcomplete.quests.max_speed.Mph
 import de.westnordost.streetcomplete.util.ktx.containsAny
 import kotlin.math.roundToInt
 
-/** Returns explicit and implicit maxspeed. Returns null if there is no such tagging */
-fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: CountryInfo): MaxspeedAndType? {
+fun createForwardAndBackwardMaxspeedAndType(tags: Map<String, String>, countryInfo: CountryInfo): ForwardAndBackwardMaxspeedAndType? {
     if (
-        !tags.keys.containsAny(MAXSPEED_TYPE_KEYS) &&
-        !tags.keys.containsAny(MAXSPEED_KEYS) &&
+        !hasAnyMaxspeedTagging(tags) &&
         !isLivingStreet(tags) &&
         !isSchoolZone(tags)
     ) return null
 
-    val maxspeedTag = tags["maxspeed"]
+    val forward = createMaxspeedAndType(tags, countryInfo, "forward", null)
+    val backward = createMaxspeedAndType(tags, countryInfo, "backward", null)
+    val both = createMaxspeedAndType(tags, countryInfo, null, null)
+
+    // Invalid to have speed tagged for one directions and no direction both tagged
+    // e.g. maxspeed along with maxspeed:forward and maxspeed:backward
+    val overDefinedExplicits = forward?.explicit != null && backward?.explicit != null && both?.explicit != null
+    val overDefinedTypes = forward?.type != null && backward?.type != null && both?.type != null
+    // Types show as over-defined for school zones and living streets
+    if ((overDefinedExplicits || overDefinedTypes) && !isLivingStreet(tags) && !isSchoolZone(tags)) {
+        return ForwardAndBackwardMaxspeedAndType(MaxspeedAndType(Invalid, Invalid), MaxspeedAndType(Invalid, Invalid))
+    }
+
+    // Could be that it is e.g. living street, so forward and backward are not null, but there is
+    // also maxspeed tagged
+    return if (forward?.explicit == null && backward?.explicit == null) {
+        if (forward?.type == backward?.type && forward?.type != Invalid) {
+            ForwardAndBackwardMaxspeedAndType(both, both)
+        } else {
+            ForwardAndBackwardMaxspeedAndType(forward, backward)
+        }
+    } else {
+        ForwardAndBackwardMaxspeedAndType(forward, backward)
+    }
+}
+
+private fun hasAnyMaxspeedTagging(tags: Map<String, String>): Boolean {
+    val containsAnyMaxspeed = MAXSPEED_KEYS.any { m -> tags.filterKeys { it.startsWith(m) }.isNotEmpty() }
+    val containsAnyMaxspeedType = MAXSPEED_TYPE_KEYS.any { m -> tags.filterKeys { it.startsWith(m) }.isNotEmpty() }
+    return containsAnyMaxspeed || containsAnyMaxspeedType
+}
+
+/** Returns explicit and implicit maxspeed. Returns null if there is no such tagging */
+fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: CountryInfo, direction: String? = null, vehicleType: String? = null): MaxspeedAndType? {
+    val dir = if (direction != null) ":$direction" else ""
+    val veh = if (vehicleType != null) ":$vehicleType" else ""
+
+    if (
+        !tags.keys.containsAny(MAXSPEED_TYPE_KEYS.map { "$it$veh$dir" }) &&
+        !tags.keys.containsAny(MAXSPEED_KEYS.map { "$it$veh$dir" }) &&
+        !isLivingStreet(tags) &&
+        !isSchoolZone(tags)
+    ) return null
+
+    val maxspeedTag = tags["maxspeed$veh$dir"]
 
     var maxspeedType: MaxSpeedAnswer?
     val impliedMaxspeedValue: MaxSpeedAnswer?
 
-    val taggedMaxspeedType = createImplicitMaxspeed(tags["maxspeed:type"], tags, countryInfo)
-    val taggedSourceMaxspeed = createImplicitMaxspeed(tags["source:maxspeed"], tags, countryInfo)
-    val taggedZoneMaxspeed = createImplicitMaxspeed(tags["zone:maxspeed"], tags, countryInfo) // e.g. "DE:30", "DE:urban" etc.
-    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic"], tags, countryInfo) // e.g. "DE:urban", "DE:zone30" etc.
+    val taggedMaxspeedType = createImplicitMaxspeed(tags["maxspeed:type$veh$dir"], tags, countryInfo)
+    val taggedSourceMaxspeed = createImplicitMaxspeed(tags["source:maxspeed$veh$dir"], tags, countryInfo)
+    val taggedZoneMaxspeed = createImplicitMaxspeed(tags["zone:maxspeed$veh$dir"], tags, countryInfo) // e.g. "DE:30", "DE:urban" etc.
+    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic$veh$dir"], tags, countryInfo) // e.g. "DE:urban", "DE:zone30" etc.
 
     // Assume that invalid "source:maxspeed" means that it is actual "source", not type
     val maxspeedTypesList = if (taggedSourceMaxspeed == Invalid) {
@@ -43,7 +85,7 @@ fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: CountryInfo): 
         else -> distinctMaxspeedTypesList.first()
     }
 
-    var maxspeedValue = createExplicitMaxspeed(tags)
+    var maxspeedValue = createExplicitMaxspeed(maxspeedTag)
 
     // maxspeed has a non-numerical value, see if it is valid
     if (maxspeedValue == Invalid && maxspeedTag != null) {
@@ -114,25 +156,24 @@ private fun createImplicitMaxspeed(value: String?, tags: Map<String, String>, co
 }
 
 /** Returns invalid if not in mph or a plain number (i.e. in km/h) */
-private fun createExplicitMaxspeed(tags: Map<String, String>): MaxSpeedAnswer? {
-    val maxspeed = tags["maxspeed"] ?: return null
-    return if (isInMph(maxspeed)) {
-        val speed = getMaxspeedinMph(tags)?.roundToInt()
+private fun createExplicitMaxspeed(value: String?): MaxSpeedAnswer? {
+    if (value == null) return null
+    // "walk" and "none" are values in "maxspeed", rather than "maxspeed:type"
+    return if (maxspeedIsWalk(value)) {
+        WalkMaxSpeed
+    } else if (maxspeedIsNone(value)) {
+        MaxSpeedIsNone
+    } else if (isInMph(value)) {
+        val speed = getMaxspeedinMph(value)?.roundToInt()
         if (speed != null) {
             MaxSpeedSign(Mph(speed))
         } else {
             Invalid
         }
-    }
-    // "walk" and "none" are values in "maxspeed", rather than "maxspeed:type"
-    else if (maxspeedIsWalk(tags)) {
-        WalkMaxSpeed
-    } else if (maxspeedIsNone(tags)) {
-        MaxSpeedIsNone
     } else {
         // Null if speed can't be converted to float, i.e. it is not just a number
         // maybe it has other units, that is invalid here
-        val speed = getMaxspeedInKmh(tags)?.roundToInt()
+        val speed = getMaxspeedInKmh(value)?.roundToInt()
         if (speed != null) {
             MaxSpeedSign(Kmh(speed))
         } else {
