@@ -329,9 +329,13 @@ private fun Tags.removeMaxspeedTaggingForAllVehiclesAndDirections() {
 private fun Tags.removeMaxspeedTypeTagging(direction: String?, vehicleType: String?) {
     val dir = if (direction != null) ":$direction" else ""
     val veh = if (vehicleType != null) ":$vehicleType" else ""
-    MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach { remove("$it$veh$dir") }
+    MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach {
+        remove("$it$veh$dir")
+        remove("$it$veh$dir:conditional")
+    }
     if (canThisSourceMaxspeedBeRemoved(this["source:maxspeed$veh$dir"])) {
         remove("source:maxspeed$veh$dir")
+        remove("source:maxspeed$veh$dir:conditional")
     }
 }
 

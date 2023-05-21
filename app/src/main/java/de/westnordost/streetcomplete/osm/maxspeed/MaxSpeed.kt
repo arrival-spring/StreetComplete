@@ -1,6 +1,32 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
+import de.westnordost.streetcomplete.osm.opening_hours.parser.OpeningHoursRuleList
 import de.westnordost.streetcomplete.quests.max_speed.Speed
+
+data class ConditionalForwardAndBackwardMaxspeed(
+    val forward: Map<Condition, MaxspeedAndType?>?,
+    val backward: Map<Condition, MaxspeedAndType?>?
+    )
+
+sealed interface Condition
+
+object Wet : Condition
+object Snow : Condition
+object Flashing : Condition
+data class Weight(val weight: Float, val comparison: Inequality) : Condition
+data class TimeCondition(val times: OpeningHoursRuleList) : Condition
+object NoCondition : Condition
+
+fun Condition.toOsmValue(): String {
+    return when (this) {
+        Wet -> "wet"
+        Snow -> "snow"
+        Flashing -> "flashing"
+        is Weight -> "weight${comparison.osmValue}$weight"
+        is TimeCondition -> times.toString()
+        NoCondition -> throw IllegalStateException()
+    }
+}
 
 data class ForwardAndBackwardMaxspeedAndType(val forward: MaxspeedAndType?, val backward: MaxspeedAndType?)
 
@@ -66,4 +92,11 @@ enum class RoadType(val osmValue: String?) {
     NSL_DUAL("nsl_dual"),
     NSL_RESTRICTED("nsl_restricted"),
     UNKNOWN(null)
+}
+
+enum class Inequality(val osmValue: String?) {
+    LESS_THAN("<"),
+    MORE_THAN(">"),
+    LESS_THAN_OR_EQUAL("<="),
+    MORE_THAN_OR_EQUAL(">=")
 }
