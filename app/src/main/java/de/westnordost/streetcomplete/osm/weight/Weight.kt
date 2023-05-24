@@ -1,4 +1,4 @@
-package de.westnordost.streetcomplete.quests.max_weight
+package de.westnordost.streetcomplete.osm.weight
 
 import de.westnordost.streetcomplete.util.ktx.toShortString
 
@@ -20,4 +20,9 @@ data class ShortTons(val tons: Double) : Weight() {
 data class ImperialPounds(val pounds: Int) : Weight() {
     override fun toMetricTons() = pounds * 0.45359237 / 1000
     override fun toString() = "$pounds lbs"
+}
+
+data class Kilograms(val kilograms: Int) : Weight() {
+    override fun toMetricTons() = kilograms * 1000.0
+    override fun toString() = "$kilograms kg"
 }

@@ -12,6 +12,10 @@ import androidx.core.widget.doAfterTextChanged
 import de.westnordost.streetcomplete.R
 import de.westnordost.streetcomplete.data.meta.WeightMeasurementUnit
 import de.westnordost.streetcomplete.databinding.QuestMaxweightBinding
+import de.westnordost.streetcomplete.osm.weight.ImperialPounds
+import de.westnordost.streetcomplete.osm.weight.MetricTons
+import de.westnordost.streetcomplete.osm.weight.ShortTons
+import de.westnordost.streetcomplete.osm.weight.Weight
 import de.westnordost.streetcomplete.quests.AbstractOsmQuestForm
 import de.westnordost.streetcomplete.quests.AnswerItem
 import de.westnordost.streetcomplete.util.ktx.numberOrNull

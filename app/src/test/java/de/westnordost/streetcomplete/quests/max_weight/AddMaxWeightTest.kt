@@ -1,6 +1,9 @@
 package de.westnordost.streetcomplete.quests.max_weight
 
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAdd
+import de.westnordost.streetcomplete.osm.weight.ImperialPounds
+import de.westnordost.streetcomplete.osm.weight.MetricTons
+import de.westnordost.streetcomplete.osm.weight.ShortTons
 import de.westnordost.streetcomplete.quests.verifyAnswer
 import org.junit.Test
 
