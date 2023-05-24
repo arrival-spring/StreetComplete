@@ -25,12 +25,20 @@ class WeightParserKtTest {
 
     @Test fun `parse weight without units`() {
         assertEquals(
+            createWeight("5"),
+            MetricTons(5.0)
+        )
+        assertEquals(
             createWeight("30"),
             MetricTons(30.0)
         )
         assertEquals(
             createWeight("7.5"),
             MetricTons(7.5)
+        )
+        assertEquals(
+            createWeight("0.35"),
+            MetricTons(0.35)
         )
     }
 

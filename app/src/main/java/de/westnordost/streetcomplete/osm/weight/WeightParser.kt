@@ -12,4 +12,4 @@ fun createWeight(weight: String?): Weight? {
     }
 }
 
-private val weightRegex = Regex("\\d+\\.?\\d+ ?(?:t|st|lbs|kg)?")
+private val weightRegex = Regex("\\d+\\.?\\d* ?(?:t|st|lbs|kg)?")
