@@ -1,32 +1,27 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
-import de.westnordost.streetcomplete.osm.opening_hours.parser.OpeningHoursRuleList
 import de.westnordost.streetcomplete.quests.max_speed.Speed
 
-data class ConditionalForwardAndBackwardMaxspeed(
+data class ForwardAndBackwardAllSpeedInformation(
+    val forward: AllSpeedInformation?,
+    val backward: AllSpeedInformation?,
+    val wholeRoadType: MaxSpeedAnswer? // e.g. living street or school zone that is not linked to a vehicle
+    )
+
+data class AllSpeedInformation(
+    val vehicles: Map<String?, Map<Condition, MaxspeedAndType?>?>,
+    val advisory: AdvisorySpeedSign?,
+    val variable: Boolean?,
+    )
+
+data class ForwardAndBackwardAdvisorySpeedSign(val forward: AdvisorySpeedSign?, val backward: AdvisorySpeedSign?, )
+
+data class ForwardAndBackwardVariableLimit(val forward: Boolean?, val backward: Boolean?)
+
+data class ForwardAndBackwardConditionalMaxspeed(
     val forward: Map<Condition, MaxspeedAndType?>?,
     val backward: Map<Condition, MaxspeedAndType?>?
     )
-
-sealed interface Condition
-
-object Wet : Condition
-object Snow : Condition
-object Flashing : Condition
-data class Weight(val weight: Float, val comparison: Inequality) : Condition
-data class TimeCondition(val times: OpeningHoursRuleList) : Condition
-object NoCondition : Condition
-
-fun Condition.toOsmValue(): String {
-    return when (this) {
-        Wet -> "wet"
-        Snow -> "snow"
-        Flashing -> "flashing"
-        is Weight -> "weight${comparison.osmValue}$weight"
-        is TimeCondition -> times.toString()
-        NoCondition -> throw IllegalStateException()
-    }
-}
 
 data class ForwardAndBackwardMaxspeedAndType(val forward: MaxspeedAndType?, val backward: MaxspeedAndType?)
 
@@ -79,24 +74,4 @@ fun MaxSpeedAnswer.toTypeOsmValueZoneMaxspeed(): String? {
         is MaxSpeedZone -> this.countryCode + ":" + this.value.toValue()
         else -> toTypeOsmValue()
     }
-}
-
-enum class RoadType(val osmValue: String?) {
-    RURAL("rural"),
-    URBAN("urban"),
-    MOTORWAY("motorway"),
-    TRUNK("trunk"),
-    LIVING_STREET("living_street"),
-    BICYCLE_ROAD("bicycle_road"),
-    NSL_SINGLE("nsl_single"),
-    NSL_DUAL("nsl_dual"),
-    NSL_RESTRICTED("nsl_restricted"),
-    UNKNOWN(null)
-}
-
-enum class Inequality(val osmValue: String?) {
-    LESS_THAN("<"),
-    MORE_THAN(">"),
-    LESS_THAN_OR_EQUAL("<="),
-    MORE_THAN_OR_EQUAL(">=")
 }

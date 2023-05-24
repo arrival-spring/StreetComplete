@@ -1,5 +1,6 @@
 package de.westnordost.streetcomplete.osm.weight
 
+/** Parse the weight from the given [weight]. */
 fun createWeight(weight: String?): Weight? {
     if (weight == null) return null
     weightRegex.matchEntire(weight) ?: return null
