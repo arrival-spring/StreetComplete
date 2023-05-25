@@ -191,11 +191,8 @@ fun isSchoolZone(tags: Map<String, String>): Boolean {
 }
 
 fun getCountryCodeFromMaxspeedType(value: String): String? {
-    val matchResult = implicitRegex.matchEntire(value)
-    return when {
-        matchResult != null -> matchResult.groupValues[1]
-        else -> null
-    }
+    val matchResult = implicitRegex.matchEntire(value) ?: return null
+    return matchResult.groupValues[1]
 }
 
 /** Functions to get speed in km/h from tags */
