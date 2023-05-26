@@ -2099,10 +2099,9 @@ class MaxspeedParserKtTest {
                     AdvisorySpeedSign(Kmh(80)),
                     false
                 ),
-                ImplicitMaxSpeed("", MOTORWAY, YES)
+                null
             ),
             parseDE(
-                "highway" to "motorway",
                 "maxspeed" to "100",
                 "zone:maxspeed" to "DE:motorway",
                 "maxspeed:backward:conditional" to "40 @ wet",

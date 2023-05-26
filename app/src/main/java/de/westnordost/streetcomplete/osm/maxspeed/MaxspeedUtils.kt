@@ -152,6 +152,19 @@ fun isLivingStreetMaxspeed(value: String): Boolean {
     return livingStreetRegex.matchEntire(value) != null
 }
 
+fun isLivingStreet(tags: Map<String, String>): Boolean {
+    return (tags["living_street"] == "yes" || tags["highway"] == "living_street")
+}
+
+fun isSchoolZone(tags: Map<String, String>): Boolean {
+    return (tags["hazard"] == "school_zone")
+}
+
+fun getCountryCodeFromMaxspeedType(value: String): String? {
+    val matchResult = implicitRegex.matchEntire(value) ?: return null
+    return matchResult.groupValues[1]
+}
+
 fun isValidMaxspeedType(value: String?): Boolean {
     return if (value == null) false
     else isImplicitMaxspeed(value) || isZoneMaxspeed(value) || value == "sign"
@@ -174,27 +187,6 @@ fun getMaxspeedInMph(value: String?): Float? {
     return if (value.endsWith(" mph")) {
         return value.substring(0, value.length - 4).toFloatOrNull()
     } else null
-}
-
-fun isLivingStreet(tags: Map<String, String>): Boolean {
-    return (tags["living_street"] == "yes" || tags["highway"] == "living_street")
-}
-
-fun isSchoolZone(tags: Map<String, String>): Boolean {
-    return (tags["hazard"] == "school_zone")
-}
-
-fun isMotorway(tags: Map<String, String>): Boolean {
-    return tags["highway"] == "motorway"
-}
-
-fun isTrunk(tags: Map<String, String>): Boolean {
-    return tags["highway"] == "trunk"
-}
-
-fun getCountryCodeFromMaxspeedType(value: String): String? {
-    val matchResult = implicitRegex.matchEntire(value) ?: return null
-    return matchResult.groupValues[1]
 }
 
 /** Functions to get speed in km/h from tags */

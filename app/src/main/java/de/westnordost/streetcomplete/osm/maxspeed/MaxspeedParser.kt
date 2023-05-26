@@ -1,8 +1,6 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
-import de.westnordost.streetcomplete.osm.lit.createLitStatus
-import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.quests.max_speed.Kmh
 import de.westnordost.streetcomplete.quests.max_speed.Mph
 import kotlin.math.roundToInt
@@ -172,7 +170,8 @@ fun createForwardAndBackwardConditionalMaxspeed(tags: Map<String, String>, count
 
 /*  Not gathering type with conditional maxspeed because it has barely been used
  *  (source:maxspeed:conditional has the most uses, with fewer than 1300 and almost all values
- *  are "sign" anyway. The return type still needs to include type so we can merge with plain speed */
+ *  are "sign" anyway. Additionally, some uses are actual conditional restrictions on the type.
+ *  The return type still needs to include type so we can merge with plain speed */
 /** Creates a map of conditions to MaxspeedAndType for the given [direction] and [vehicleType],
  *  including a map from NoCondition for the bare tags. */
 fun createConditionalMaxspeed(tags: Map<String, String>, direction: String?, vehicleType: String?): Map<Condition, MaxspeedAndType>? {
@@ -336,13 +335,11 @@ private fun createWholeRoadType(tags: Map<String, String>, countryInfo: CountryI
         isSchoolZone(tags) -> IsSchoolZone
         isLivingStreet(tags) -> LivingStreet(null)
         isLivingStreetAsType -> livingStreetAsType?.type
-        isMotorway(tags) -> ImplicitMaxSpeed("", MOTORWAY, createLitStatus(tags))
-        isTrunk(tags) -> ImplicitMaxSpeed("", TRUNK, createLitStatus(tags))
         else -> null
     }
 }
 
-/** Needs all tags to determine if way is lit */
+/** Create an ImplicitMaxspeed object for the given [value]. Needs all tags to determine if the way is lit */
 private fun createImplicitMaxspeed(value: String?, tags: Map<String, String>, countryInfo: CountryInfo): MaxSpeedAnswer? {
     return when {
         value == null -> null
@@ -356,7 +353,8 @@ private fun createImplicitMaxspeed(value: String?, tags: Map<String, String>, co
     }
 }
 
-/** Returns invalid if not in mph or a plain number (i.e. in km/h) */
+/** Return the explicit maxspeed for the given [value].
+ *  Returns invalid if not in mph or a plain number (i.e. in km/h) */
 fun createExplicitMaxspeed(value: String?): MaxSpeedAnswer? {
     if (value == null) return null
     // "walk" and "none" are values in "maxspeed", rather than "maxspeed:type"
