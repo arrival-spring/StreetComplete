@@ -5,6 +5,7 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryChange
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryDelete
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
+import de.westnordost.streetcomplete.osm.lit.LitStatus.*
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.quests.max_speed.Kmh
 import de.westnordost.streetcomplete.quests.max_speed.Mph
@@ -68,7 +69,7 @@ class MaxspeedCreatorKtTest {
     @Test fun `tag lit status when given`() {
         verifyAnswer(
             mapOf(),
-            maxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_SINGLE, false)),
+            maxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_SINGLE, NO)),
             arrayOf(
                 StringMapEntryAdd("maxspeed:type", "GB:nsl_single"),
                 StringMapEntryAdd("lit", "no")
@@ -76,7 +77,7 @@ class MaxspeedCreatorKtTest {
         )
         verifyAnswer(
             mapOf(),
-            maxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_RESTRICTED, true)),
+            maxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_RESTRICTED, YES)),
             arrayOf(
                 StringMapEntryAdd("maxspeed:type", "GB:nsl_restricted"),
                 StringMapEntryAdd("lit", "yes")

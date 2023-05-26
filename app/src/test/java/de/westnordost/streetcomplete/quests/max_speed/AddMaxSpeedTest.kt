@@ -2,6 +2,7 @@ package de.westnordost.streetcomplete.quests.max_speed
 
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAdd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
+import de.westnordost.streetcomplete.osm.lit.LitStatus.*
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
 import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
@@ -65,7 +66,7 @@ class AddMaxSpeedTest {
     @Test fun `apply nsl restricted answer lit mapped`() {
         questType.verifyAnswer(
             mapOf("lit" to "yes"),
-            ImplicitMaxSpeed("GB", NSL_RESTRICTED, true),
+            ImplicitMaxSpeed("GB", NSL_RESTRICTED, YES),
             StringMapEntryAdd("maxspeed:type", "GB:nsl_restricted"),
             StringMapEntryModify("lit", "yes", "yes")
         )
@@ -73,7 +74,7 @@ class AddMaxSpeedTest {
 
     @Test fun `apply nsl restricted answer lit not mapped`() {
         questType.verifyAnswer(
-            ImplicitMaxSpeed("GB", NSL_RESTRICTED, true),
+            ImplicitMaxSpeed("GB", NSL_RESTRICTED, YES),
             StringMapEntryAdd("maxspeed:type", "GB:nsl_restricted"),
             StringMapEntryAdd("lit", "yes")
         )
@@ -82,7 +83,7 @@ class AddMaxSpeedTest {
     @Test fun `apply nsl single answer lit mapped`() {
         questType.verifyAnswer(
             mapOf("lit" to "no"),
-            ImplicitMaxSpeed("GB", NSL_SINGLE, false),
+            ImplicitMaxSpeed("GB", NSL_SINGLE, NO),
             StringMapEntryAdd("maxspeed:type", "GB:nsl_single"),
             StringMapEntryModify("lit", "no", "no")
         )
@@ -90,7 +91,7 @@ class AddMaxSpeedTest {
 
     @Test fun `apply nsl single answer lit not mapped`() {
         questType.verifyAnswer(
-            ImplicitMaxSpeed("GB", NSL_SINGLE, false),
+            ImplicitMaxSpeed("GB", NSL_SINGLE, NO),
             StringMapEntryAdd("maxspeed:type", "GB:nsl_single"),
             StringMapEntryAdd("lit", "no")
         )

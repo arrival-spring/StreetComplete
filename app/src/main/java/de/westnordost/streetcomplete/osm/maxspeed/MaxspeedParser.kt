@@ -1,6 +1,8 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
+import de.westnordost.streetcomplete.osm.lit.createLitStatus
+import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.quests.max_speed.Kmh
 import de.westnordost.streetcomplete.quests.max_speed.Mph
 import kotlin.math.roundToInt
@@ -10,14 +12,41 @@ fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, count
     val vehicleMap = createVehicleConditionalMap(tags, countryInfo)
     val advisory = createForwardAndBackwardAdvisorySpeedSign(tags)
     val variable = createForwardAndBackwardVariableLimit(tags)
+    val wholeRoadType = createWholeRoadType(tags, countryInfo)
 
-    val forwardVehicleMap = vehicleMap.mapValues { (_, v) -> v?.forward }.filterValues { !it.isNullOrEmpty() }
-    val backwardVehicleMap = vehicleMap.mapValues { (_, v) -> v?.backward }.filterValues { !it.isNullOrEmpty() }
+    var forwardVehicleMap = vehicleMap?.mapValues { (_, v) -> v?.forward }?.filterValues { !it.isNullOrEmpty() }
+    if (forwardVehicleMap.isNullOrEmpty()) forwardVehicleMap = null
+    var backwardVehicleMap = vehicleMap?.mapValues { (_, v) -> v?.backward }?.filterValues { !it.isNullOrEmpty() }
+    if (backwardVehicleMap.isNullOrEmpty()) backwardVehicleMap = null
+
+    val allSpeedForward = if (
+        forwardVehicleMap == null
+        && advisory?.forward == null
+        && variable?.forward == null
+    ) {
+        null
+    } else {
+        AllSpeedInformation(forwardVehicleMap, advisory?.forward, variable?.forward)
+    }
+
+    val allSpeedBackward = if (
+        backwardVehicleMap == null
+        && advisory?.backward == null
+        && variable?.backward == null
+    ) {
+        null
+    } else {
+        AllSpeedInformation(backwardVehicleMap, advisory?.backward, variable?.backward)
+    }
+
+    if (allSpeedForward == null && allSpeedBackward == null && wholeRoadType == null) {
+        return null
+    }
 
     return ForwardAndBackwardAllSpeedInformation(
-        AllSpeedInformation(forwardVehicleMap, advisory?.forward, variable?.forward),
-        AllSpeedInformation(backwardVehicleMap, advisory?.backward, variable?.backward),
-        createWholeRoadType(tags, countryInfo)
+        allSpeedForward,
+        allSpeedBackward,
+        wholeRoadType
     )
 }
 
@@ -84,7 +113,7 @@ fun isVariableLimit(tags: Map<String, String>, direction: String?): Boolean? {
     }
 }
 
-fun createVehicleConditionalMap(tags: Map<String, String>, countryInfo: CountryInfo): Map<String?, ForwardAndBackwardConditionalMaxspeed?> {
+fun createVehicleConditionalMap(tags: Map<String, String>, countryInfo: CountryInfo): Map<String?, ForwardAndBackwardConditionalMaxspeed?>? {
     val vehicleMap = mutableMapOf<String?, ForwardAndBackwardConditionalMaxspeed?>()
     (setOf(null) + VEHICLE_TYPES).forEach { v ->
         val m = createForwardAndBackwardConditionalMaxspeed(tags, countryInfo, v)
@@ -93,24 +122,18 @@ fun createVehicleConditionalMap(tags: Map<String, String>, countryInfo: CountryI
             m.backward?.filterValues { it != null }
         )
     }
+    if (vehicleMap.isEmpty()) return null
     return vehicleMap
 }
 
 /** Creates a ForwardAndBackwardConditionalMaxspeed object of maps of conditions to MaxspeedAndType
  *  for each direction for the given [vehicleType]. Conditions applying to both directions are split
- *  into both directions. Any clashing values are replaced with Invalid. */
+ *  into each direction. Any clashing values are replaced with Invalid. */
 fun createForwardAndBackwardConditionalMaxspeed(tags: Map<String, String>, countryInfo: CountryInfo, vehicleType: String?): ForwardAndBackwardConditionalMaxspeed {
     val forwardConditional = createConditionalMaxspeed(tags, "forward", vehicleType)
     val backwardConditional = createConditionalMaxspeed(tags, "backward", vehicleType)
     val bothConditional = createConditionalMaxspeed(tags, null, vehicleType)
     val unconditional = createForwardAndBackwardMaxspeedAndType(tags, countryInfo, vehicleType)
-
-    // TODO: I don't think I want this
-    // maxspeed:conditional without maxspeed is an error, so don't return any of the conditions
-    // but e.g. maxspeed:hgv:conditional without maxspeed:hgv would be ok
-    if (vehicleType == null && unconditional == null) {
-        return ForwardAndBackwardConditionalMaxspeed(mapOf(NoCondition to null), mapOf(NoCondition to null))
-    }
 
     val unconditionalMapForward = mapOf<Condition, MaxspeedAndType?>(NoCondition to unconditional?.forward)
     val unconditionalMapBackward = mapOf<Condition, MaxspeedAndType?>(NoCondition to unconditional?.backward)
@@ -119,25 +142,31 @@ fun createForwardAndBackwardConditionalMaxspeed(tags: Map<String, String>, count
         forwardConditional == null && backwardConditional == null && bothConditional == null -> {
             ForwardAndBackwardConditionalMaxspeed(unconditionalMapForward, unconditionalMapBackward)
         }
-        forwardConditional == null && backwardConditional == null -> ForwardAndBackwardConditionalMaxspeed(
-            combineConditionalsMaxspeedMaps(bothConditional, unconditionalMapForward),
-            combineConditionalsMaxspeedMaps(bothConditional, unconditionalMapBackward)
-        )
-        bothConditional == null -> ForwardAndBackwardConditionalMaxspeed(
-            combineConditionalsMaxspeedMaps(forwardConditional, unconditionalMapForward),
-            combineConditionalsMaxspeedMaps(backwardConditional, unconditionalMapBackward)
-        )
-        // Need to combine directions, e.g. we might have maxspeed:conditional and maxspeed:backward:conditional
-        else -> ForwardAndBackwardConditionalMaxspeed(
-            combineConditionalsMaxspeedMaps(
-                combineConditionalsMaxspeedMaps(forwardConditional, unconditionalMapForward),
-                bothConditional
-            ),
-            combineConditionalsMaxspeedMaps(
-                combineConditionalsMaxspeedMaps(backwardConditional, unconditionalMapBackward),
-                bothConditional
+        forwardConditional == null && backwardConditional == null -> {
+            ForwardAndBackwardConditionalMaxspeed(
+                combineConditionalMaxspeedMaps(bothConditional, unconditionalMapForward),
+                combineConditionalMaxspeedMaps(bothConditional, unconditionalMapBackward)
             )
-        )
+        }
+        bothConditional == null -> {
+            ForwardAndBackwardConditionalMaxspeed(
+                combineConditionalMaxspeedMaps(forwardConditional, unconditionalMapForward),
+                combineConditionalMaxspeedMaps(backwardConditional, unconditionalMapBackward)
+            )
+        }
+        // Need to combine directions, e.g. we might have maxspeed:conditional and maxspeed:backward:conditional
+        else -> {
+            ForwardAndBackwardConditionalMaxspeed(
+                combineConditionalMaxspeedMaps(
+                    combineConditionalMaxspeedMaps(forwardConditional, unconditionalMapForward),
+                    bothConditional
+                ),
+                combineConditionalMaxspeedMaps(
+                    combineConditionalMaxspeedMaps(backwardConditional, unconditionalMapBackward),
+                    bothConditional
+                )
+            )
+        }
     }
 }
 
@@ -155,29 +184,31 @@ fun createConditionalMaxspeed(tags: Map<String, String>, direction: String?, veh
 
 /** Combines two conditional maxspeed maps, setting any to invalid where the values for the
  *  conditions are not equal. */
-fun combineConditionalsMaxspeedMaps(first: Map<Condition, MaxspeedAndType?>?, second: Map<Condition, MaxspeedAndType?>?): Map<Condition, MaxspeedAndType?>? {
-    if (first == null) {
-        return second
-    } else if (second == null) {
-        return first
+fun combineConditionalMaxspeedMaps(a: Map<Condition, MaxspeedAndType?>?, b: Map<Condition, MaxspeedAndType?>?): Map<Condition, MaxspeedAndType?>? {
+    if (a == null) {
+        return b
+    } else if (b == null) {
+        return a
     }
     // plus prefers the elements on the right, so these are different if there is a clash of values
-    else if (first + second == second + first) {
-        return first + second
+    else if (a + b == b + a) {
+        return a + b
     }
 
     val newMap = mutableMapOf<Condition, MaxspeedAndType?>()
 
     // Any mismatching values get changed to Invalid
-    first.forEach { (k, v) ->
-        if (second.keys.contains(k) && second[k] != v) {
+    // Reason: it seems that someone wanted to set a different speed e.g. when it's wet, so we
+    // want to indicate that there 'should' be a value here, rather than just returning null
+    a.forEach { (k, v) ->
+        if (b.keys.contains(k) && b[k] != v) {
             newMap[k] = MaxspeedAndType(Invalid, Invalid)
         } else {
             newMap[k] = v
         }
     }
     // plus prefers values on the right, so the invalid values replace anything in second
-    return second + newMap
+    return b + newMap
 }
 
 /** Creates a combined set of MaxspeedAndType for forwards and backwards. If there is any over-
@@ -191,10 +222,10 @@ fun createForwardAndBackwardMaxspeedAndType(tags: Map<String, String>, countryIn
 
     if (forward == null && backward == null && both == null) return null
 
-    // Invalid to have speed tagged for one directions and no direction to both tagged
-    // e.g. maxspeed along with maxspeed:forward and maxspeed:backward
-    val overDefinedExplicits = forward?.explicit != null && backward?.explicit != null && both?.explicit != null
-    val overDefinedTypes = forward?.type != null && backward?.type != null && both?.type != null
+    // Invalid to have speed tagged for one directions and no direction both tagged
+    // e.g. maxspeed along with maxspeed:forward or maxspeed:backward
+    val overDefinedExplicits = ( forward?.explicit != null || backward?.explicit != null ) && both?.explicit != null
+    val overDefinedTypes = ( forward?.type != null || backward?.type != null ) && both?.type != null
 
     if (overDefinedExplicits || overDefinedTypes) {
         return ForwardAndBackwardMaxspeedAndType(MaxspeedAndType(Invalid, Invalid), MaxspeedAndType(Invalid, Invalid))
@@ -305,6 +336,8 @@ private fun createWholeRoadType(tags: Map<String, String>, countryInfo: CountryI
         isSchoolZone(tags) -> IsSchoolZone
         isLivingStreet(tags) -> LivingStreet(null)
         isLivingStreetAsType -> livingStreetAsType?.type
+        isMotorway(tags) -> ImplicitMaxSpeed("", MOTORWAY, createLitStatus(tags))
+        isTrunk(tags) -> ImplicitMaxSpeed("", TRUNK, createLitStatus(tags))
         else -> null
     }
 }
@@ -328,6 +361,7 @@ fun createExplicitMaxspeed(value: String?): MaxSpeedAnswer? {
     if (value == null) return null
     // "walk" and "none" are values in "maxspeed", rather than "maxspeed:type"
     return when {
+        value == "signals" -> null // Dealt with as variable maxspeed, treat as if maxspeed is not set
         maxspeedIsWalk(value) -> WalkMaxSpeed
         maxspeedIsNone(value) -> MaxSpeedIsNone
         isInMph(value) -> {

@@ -3,6 +3,7 @@ package de.westnordost.streetcomplete.osm.maxspeed
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.CountryInfos
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
+import de.westnordost.streetcomplete.osm.lit.createLitStatus
 import de.westnordost.streetcomplete.osm.maxspeed.Inequality.*
 import de.westnordost.streetcomplete.osm.opening_hours.parser.toOpeningHoursRules
 import de.westnordost.streetcomplete.osm.weight.createWeight
@@ -120,16 +121,9 @@ fun getImplicitMaxspeed(value: String, tags: Map<String, String>): ImplicitMaxSp
     val matchResult = implicitRegex.matchEntire(value) ?: return null
     val typeSpeed = matchResult.groupValues[2]
     val countryCode = matchResult.groupValues[1]
-    val lit = when {
-        tags["lit"] == null -> null
-        tags["lit"] == "yes" -> true
-        tags["lit"] == "no" -> false
-        // null on unknown values
-        else -> null
-    }
     val roadType = RoadType.values().find { it.osmValue == typeSpeed } ?: RoadType.UNKNOWN
 
-    return ImplicitMaxSpeed(countryCode, roadType, lit)
+    return ImplicitMaxSpeed(countryCode, roadType, createLitStatus(tags))
 }
 
 fun isZoneMaxspeed(value: String): Boolean {
@@ -188,6 +182,14 @@ fun isLivingStreet(tags: Map<String, String>): Boolean {
 
 fun isSchoolZone(tags: Map<String, String>): Boolean {
     return (tags["hazard"] == "school_zone")
+}
+
+fun isMotorway(tags: Map<String, String>): Boolean {
+    return tags["highway"] == "motorway"
+}
+
+fun isTrunk(tags: Map<String, String>): Boolean {
+    return tags["highway"] == "trunk"
 }
 
 fun getCountryCodeFromMaxspeedType(value: String): String? {

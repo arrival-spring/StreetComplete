@@ -3,10 +3,10 @@ package de.westnordost.streetcomplete.osm.maxspeed
 import de.westnordost.streetcomplete.osm.Tags
 import de.westnordost.streetcomplete.osm.expandDirections
 import de.westnordost.streetcomplete.osm.hasCheckDateForKey
+import de.westnordost.streetcomplete.osm.lit.applyTo
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.UNKNOWN
 import de.westnordost.streetcomplete.osm.mergeDirections
 import de.westnordost.streetcomplete.osm.updateCheckDateForKey
-import de.westnordost.streetcomplete.util.ktx.toYesNo
 
 /** Apply the maxspeed and type for each direction to the given [tags], with optional [vehicleType],
  *  e.g. "hgv" for "maxspeed:hgv. */
@@ -274,7 +274,7 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null, vehicleType: 
         // TODO what if different vehicles or directions provide different lit values? (lit:forward and lit:backward do not exist), obviously
         if (type is ImplicitMaxSpeed) {
             // Lit is either already set or has been answered by the user, so this wouldn't change the value of the lit tag
-            type.lit?.let { tags["lit"] = it.toYesNo() }
+            type.lit?.applyTo(tags)
         }
         // If user was shown that it was a school zone and selected something else, remove school zone tag
         // Checking if it's a living street because user was also shown it as a school zone if there was

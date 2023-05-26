@@ -1,5 +1,6 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
+import de.westnordost.streetcomplete.osm.lit.LitStatus
 import de.westnordost.streetcomplete.quests.max_speed.Speed
 
 data class ForwardAndBackwardAllSpeedInformation(
@@ -9,12 +10,12 @@ data class ForwardAndBackwardAllSpeedInformation(
     )
 
 data class AllSpeedInformation(
-    val vehicles: Map<String?, Map<Condition, MaxspeedAndType?>?>,
+    val vehicles: Map<String?, Map<Condition, MaxspeedAndType?>?>?,
     val advisory: AdvisorySpeedSign?,
     val variable: Boolean?,
     )
 
-data class ForwardAndBackwardAdvisorySpeedSign(val forward: AdvisorySpeedSign?, val backward: AdvisorySpeedSign?, )
+data class ForwardAndBackwardAdvisorySpeedSign(val forward: AdvisorySpeedSign?, val backward: AdvisorySpeedSign?)
 
 data class ForwardAndBackwardVariableLimit(val forward: Boolean?, val backward: Boolean?)
 
@@ -35,10 +36,9 @@ data class MaxspeedAndType(val explicit: MaxSpeedAnswer?, val type: MaxSpeedAnsw
 sealed interface MaxSpeedAnswer
 
 data class MaxSpeedSign(val value: Speed) : MaxSpeedAnswer
-data class MaxSpeedZone(val value: Speed, val countryCode: String, val roadType: String) :
-    MaxSpeedAnswer
+data class MaxSpeedZone(val value: Speed, val countryCode: String, val roadType: String) : MaxSpeedAnswer
 data class AdvisorySpeedSign(val value: Speed) : MaxSpeedAnswer
-data class ImplicitMaxSpeed(val countryCode: String, val roadType: RoadType, val lit: Boolean?) : MaxSpeedAnswer
+data class ImplicitMaxSpeed(val countryCode: String, val roadType: RoadType, val lit: LitStatus?) : MaxSpeedAnswer
 // LivingStreet needs a country code in case it is used as a type
 data class LivingStreet(val countryCode: String?) : MaxSpeedAnswer
 object IsSchoolZone : MaxSpeedAnswer

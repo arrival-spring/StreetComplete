@@ -6,6 +6,7 @@ import de.westnordost.streetcomplete.data.osm.osmquests.OsmFilterQuestType
 import de.westnordost.streetcomplete.data.quest.AllCountriesExcept
 import de.westnordost.streetcomplete.data.user.achievements.EditTypeAchievement.CAR
 import de.westnordost.streetcomplete.osm.Tags
+import de.westnordost.streetcomplete.osm.lit.applyTo
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
 import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
@@ -14,7 +15,6 @@ import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedAnswer
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
 import de.westnordost.streetcomplete.osm.surface.ANYTHING_UNPAVED
-import de.westnordost.streetcomplete.util.ktx.toYesNo
 
 class AddMaxSpeed : OsmFilterQuestType<MaxSpeedAnswer>() {
 
@@ -63,7 +63,7 @@ class AddMaxSpeed : OsmFilterQuestType<MaxSpeedAnswer>() {
             is ImplicitMaxSpeed -> {
                 tags["maxspeed:type"] = answer.countryCode + ":" + answer.roadType.osmValue
                 // Lit is either already set or has been answered by the user, so this wouldn't change the value of the lit tag
-                answer.lit?.let { tags["lit"] = it.toYesNo() }
+                answer.lit?.applyTo(tags)
             }
             else -> throw IllegalArgumentException("Attempting to tag invalid maxspeed")
         }

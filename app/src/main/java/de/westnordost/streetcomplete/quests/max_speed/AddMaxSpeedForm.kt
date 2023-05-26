@@ -20,6 +20,8 @@ import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.KILOMETERS_P
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.MILES_PER_HOUR
 import de.westnordost.streetcomplete.databinding.QuestMaxspeedBinding
 import de.westnordost.streetcomplete.databinding.QuestMaxspeedNoSignNoSlowZoneConfirmationBinding
+import de.westnordost.streetcomplete.osm.lit.LitStatus
+import de.westnordost.streetcomplete.osm.lit.LitStatus.*
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
 import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
@@ -260,8 +262,8 @@ class AddMaxSpeedForm : AbstractOsmQuestForm<MaxSpeedAnswer>() {
                     onYes = { applyNoSignAnswer(NSL_DUAL) },
                     onNo = {
                         determineLit(
-                            onYes = { applyNoSignAnswer(NSL_RESTRICTED, true) },
-                            onNo = { applyNoSignAnswer(NSL_SINGLE, false) }
+                            onYes = { applyNoSignAnswer(NSL_RESTRICTED, YES) },
+                            onNo = { applyNoSignAnswer(NSL_SINGLE, NO) }
                         )
                     }
                 )
@@ -316,7 +318,7 @@ class AddMaxSpeedForm : AbstractOsmQuestForm<MaxSpeedAnswer>() {
         }
     }
 
-    private fun applyNoSignAnswer(roadType: RoadType, lit: Boolean? = null) {
+    private fun applyNoSignAnswer(roadType: RoadType, lit: LitStatus? = null) {
         applyAnswer(ImplicitMaxSpeed(countryInfo.countryCode, roadType, lit))
     }
 
