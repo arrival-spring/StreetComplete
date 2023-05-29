@@ -107,8 +107,12 @@ private fun AllSpeedInformation?.applyTo(tags: Tags, direction: String?) {
 
     if (this.variable == null) {
         tags.remove("maxspeed:variable$dir")
+        tags.remove("maxspeed:variable:max$dir")
     } else {
         tags["maxspeed:variable$dir"] = this.variable.toVariableLimit(tags, direction)
+        if (this.vehicles?.get(null)?.get(NoCondition) != null) {
+            tags.remove("maxspeed:variable:max$dir") // this should go in maxspeed tag
+        }
     }
 }
 
@@ -139,7 +143,7 @@ private fun Map<Condition, MaxspeedAndType?>.applyTo(tags: Tags, direction: Stri
     val dir = if (direction != null) ":$direction" else ""
     val veh = if (vehicleType != null) ":$vehicleType" else ""
     val conditionalKey = "maxspeed$veh$dir:conditional"
-    val taggings = mutableListOf<String>()
+    val conditionalOsmValues = mutableListOf<String>()
 
     // Don't change the value if nothing has changed
     val previousConditional = createConditionalMaxspeed(tags, direction, vehicleType)
@@ -153,19 +157,22 @@ private fun Map<Condition, MaxspeedAndType?>.applyTo(tags: Tags, direction: Stri
             NoCondition -> it.value.applyTo(tags, direction, vehicleType)
             else -> {
                 val osmValue = it.value?.explicit?.toSpeedOsmValue() ?: return@forEach
-                if (useBrackets) taggings.add("$osmValue @ (${it.key.toOsmValue()})")
-                else taggings.add("$osmValue @ ${it.key.toOsmValue()}")
+                if (useBrackets) conditionalOsmValues.add("$osmValue @ (${it.key.toOsmValue()})")
+                else conditionalOsmValues.add("$osmValue @ ${it.key.toOsmValue()}")
             }
         }
     }
-    if (taggings.isEmpty()) {
+    if (conditionalOsmValues.isEmpty()) {
         tags.removeMaxspeedTagging(direction, vehicleType, "conditional")
         tags.removeMaxspeedTypeTagging(direction, vehicleType, "conditional")
     } else {
         // Existing practice appears to be that you start with the fastest speed and decrease
-        taggings.sortByDescending { it.split(" ")[0].toInt() }
-        tags[conditionalKey] = taggings.joinToString("; ")
+        conditionalOsmValues.sortByDescending { it.split(" ")[0].toInt() }
+        tags[conditionalKey] = conditionalOsmValues.joinToString("; ")
     }
+
+    // TODO: remove if proposal is rejected
+    CONDITIONAL_MAXSPEED_TAGS.forEach { tags.remove("$it$veh$dir") }
 }
 
 private fun Tags.expandAllMaxspeedTags() {
@@ -179,6 +186,7 @@ private fun Tags.expandMaxspeedTags(vehicleType: String?) {
         this.expandDirections("$it$veh", "conditional")
         this.expandDirections("$it$veh", "signed")
     }
+    this.expandDirections("maxspeed:variable$veh:max", null)
     MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach {
         this.expandDirections("$it$veh", null)
         this.expandDirections("$it$veh", "conditional")
@@ -187,6 +195,9 @@ private fun Tags.expandMaxspeedTags(vehicleType: String?) {
     if (canThisSourceMaxspeedBeRemoved(this["source:maxspeed$veh"])) {
         this.expandDirections("source:maxspeed$veh", null)
         this.expandDirections("source:maxspeed$veh", "conditional")
+    }
+    CONDITIONAL_MAXSPEED_TAGS.forEach {
+        this.expandDirections("$it$veh", null)
     }
 }
 
@@ -201,6 +212,7 @@ private fun Tags.mergeMaxspeedTags(vehicleType: String?) {
         this.mergeDirections("$it$veh", "conditional")
         this.mergeDirections("$it$veh", "signed")
     }
+    this.mergeDirections("maxspeed:variable$veh:max", null)
     // Only merge type tags if directions have been merged
     // i.e. maxspeed:forward=xx maxspeed:backward=yy should be combined with
     // maxspeed:type:forward=sign and maxspeed:type:backward=sign, not just maxspeed:type=sign
@@ -214,6 +226,9 @@ private fun Tags.mergeMaxspeedTags(vehicleType: String?) {
         if (!directionsExistAndDiffer(this, "$veh:conditional")) {
             this.mergeDirections("$it$veh", "conditional")
         }
+    }
+    CONDITIONAL_MAXSPEED_TAGS.forEach {
+        this.mergeDirections("$it$veh", null)
     }
 }
 

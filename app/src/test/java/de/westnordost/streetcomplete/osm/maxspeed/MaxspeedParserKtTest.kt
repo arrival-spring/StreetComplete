@@ -1406,6 +1406,37 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoVehiclesBothDirections(
+                mapOf(Wet to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 mph @ wet")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(Snow to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 mph @ snow")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(Winter to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 mph @ winter")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 mph @ flashing")
+        )
+    }
+
+    @Test fun `parse flashing conditions`() {
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
                 mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
@@ -1439,33 +1470,46 @@ class MaxspeedParserKtTest {
             ),
             parse("maxspeed:conditional" to "40 @ 'flashing'")
         )
+    }
+
+    @Test fun `parse night conditions`() {
         assertEquals(
             maxspeedNoVehiclesBothDirections(
-                mapOf(Wet to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                mapOf(Night to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
-            parse("maxspeed:conditional" to "40 mph @ wet")
+            parse("maxspeed:conditional" to "40 @ sunset-sunrise")
         )
         assertEquals(
             maxspeedNoVehiclesBothDirections(
-                mapOf(Snow to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                mapOf(Night to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
-            parse("maxspeed:conditional" to "40 mph @ snow")
+            parse("maxspeed:conditional" to "40 @ dusk-dawn")
+        )
+    }
+
+    @Test fun `parse other conditional tags as conditions`() {
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(Night to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:night" to "40")
         )
         assertEquals(
             maxspeedNoVehiclesBothDirections(
-                mapOf(Winter to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                mapOf(Winter to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
-            parse("maxspeed:conditional" to "40 mph @ winter")
+            parse("maxspeed:seasonal:winter" to "40")
         )
         assertEquals(
             maxspeedNoVehiclesBothDirections(
-                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
+                mapOf(Wet to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
-            parse("maxspeed:conditional" to "40 mph @ flashing")
+            parse("maxspeed:wet" to "40")
         )
     }
 

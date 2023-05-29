@@ -20,8 +20,8 @@ data class ForwardAndBackwardAdvisorySpeedSign(val forward: AdvisorySpeedSign?, 
 data class ForwardAndBackwardVariableLimit(val forward: Boolean?, val backward: Boolean?)
 
 data class ForwardAndBackwardConditionalMaxspeed(
-    val forward: Map<Condition, MaxspeedAndType?>?,
-    val backward: Map<Condition, MaxspeedAndType?>?
+    val forward: Map<Condition, MaxspeedAndType>?,
+    val backward: Map<Condition, MaxspeedAndType>?
     )
 
 data class ForwardAndBackwardMaxspeedAndType(val forward: MaxspeedAndType?, val backward: MaxspeedAndType?)

@@ -28,6 +28,12 @@ val MAXSPEED_TYPE_KEYS = setOf(
     "source:maxspeed"
 ) + MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE
 
+val CONDITIONAL_MAXSPEED_TAGS = setOf(
+    "maxspeed:night",
+    "maxspeed:seasonal:winter",
+    "maxspeed:wet"
+)
+
 // Taken fom "access" wiki page
 // Many of these may not have been used (very much) for maxspeed, but it is possible that they would be
 val VEHICLE_TYPES = setOf(
@@ -93,6 +99,7 @@ private fun getCondition(condition: String?): Condition? {
         condition == "wet" -> Wet
         isFlashing(condition) -> Flashing
         condition == "winter" -> Winter
+        isNightCondition(condition) -> Night
         condition.startsWith("weight") -> getWeightAndComparison(condition)
         conditionAsOpeningHours != null -> TimeCondition(condition.toOpeningHoursRules()!!)
         else -> null
@@ -112,6 +119,15 @@ private fun isFlashing(condition: String?): Boolean {
         "flashing_lights" -> true
         "\"flashing\";␣PH␣off;␣SH␣off" -> true
         "flashing;␣SH␣off" -> true
+        else -> false
+    }
+}
+
+// dealing with this outside of opening hours parser because it will be displayed as a separate option
+private fun isNightCondition(condition: String?): Boolean {
+    return when (condition) {
+        "sunset-sunrise" -> true
+        "dusk-dawn" -> true
         else -> false
     }
 }

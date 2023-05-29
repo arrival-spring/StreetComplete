@@ -115,10 +115,7 @@ private fun createVehicleConditionalMap(tags: Map<String, String>, countryInfo: 
     val vehicleMap = mutableMapOf<String?, ForwardAndBackwardConditionalMaxspeed?>()
     (setOf(null) + VEHICLE_TYPES).forEach { v ->
         val m = createForwardAndBackwardConditionalMaxspeed(tags, countryInfo, v)
-        vehicleMap[v] = ForwardAndBackwardConditionalMaxspeed(
-            m.forward?.filterValues { it != null },
-            m.backward?.filterValues { it != null }
-        )
+        vehicleMap[v] = ForwardAndBackwardConditionalMaxspeed(m.forward, m.backward)
     }
     if (vehicleMap.isEmpty()) return null
     return vehicleMap
@@ -133,8 +130,12 @@ private fun createForwardAndBackwardConditionalMaxspeed(tags: Map<String, String
     val bothConditional = createConditionalMaxspeed(tags, null, vehicleType)
     val unconditional = createForwardAndBackwardMaxspeedAndType(tags, countryInfo, vehicleType)
 
-    val unconditionalMapForward = mapOf<Condition, MaxspeedAndType?>(NoCondition to unconditional?.forward)
-    val unconditionalMapBackward = mapOf<Condition, MaxspeedAndType?>(NoCondition to unconditional?.backward)
+    val unconditionalMapForward = if (unconditional?.forward != null) {
+        mapOf<Condition, MaxspeedAndType>(NoCondition to unconditional.forward)
+    } else null
+    val unconditionalMapBackward = if (unconditional?.backward != null) {
+        mapOf<Condition, MaxspeedAndType>(NoCondition to unconditional.backward)
+    } else null
 
     return when {
         forwardConditional == null && backwardConditional == null && bothConditional == null -> {
@@ -178,12 +179,26 @@ fun createConditionalMaxspeed(tags: Map<String, String>, direction: String?, veh
     val dir = if (direction != null) ":$direction" else ""
     val veh = if (vehicleType != null) ":$vehicleType" else ""
     val speedKey = "maxspeed$veh$dir:conditional"
-    return getConditionalMaxspeed(tags[speedKey])?.mapValues { MaxspeedAndType(it.value, null) }
+    val fromMaxspeedConditional = getConditionalMaxspeed(tags[speedKey])?.mapValues { MaxspeedAndType(it.value, null) }
+    val otherConditionals = mutableMapOf<Condition, MaxspeedAndType>()
+
+    val otherConditionalTags = mapOf(
+        "maxspeed:night$veh$dir" to Night,
+        "maxspeed:seasonal:winter$veh$dir" to Winter, // TODO: remove if proposal is rejected
+        "maxspeed:wet$veh$dir" to Wet,
+    )
+    otherConditionalTags.forEach {
+        if (tags[it.key] != null) {
+            otherConditionals[it.value] = MaxspeedAndType(createExplicitMaxspeed(tags[it.key]), null)
+        }
+    }
+
+    return combineConditionalMaxspeedMaps(fromMaxspeedConditional, otherConditionals)
 }
 
 /** Combines two conditional maxspeed maps, setting any to invalid where the values for the
  *  conditions are not equal. */
-private fun combineConditionalMaxspeedMaps(a: Map<Condition, MaxspeedAndType?>?, b: Map<Condition, MaxspeedAndType?>?): Map<Condition, MaxspeedAndType?>? {
+private fun combineConditionalMaxspeedMaps(a: Map<Condition, MaxspeedAndType>?, b: Map<Condition, MaxspeedAndType>?): Map<Condition, MaxspeedAndType>? {
     if (a == null) {
         return b
     } else if (b == null) {
@@ -194,7 +209,7 @@ private fun combineConditionalMaxspeedMaps(a: Map<Condition, MaxspeedAndType?>?,
         return a + b
     }
 
-    val newMap = mutableMapOf<Condition, MaxspeedAndType?>()
+    val newMap = mutableMapOf<Condition, MaxspeedAndType>()
 
     // Any mismatching values get changed to Invalid
     // Reason: it seems that someone wanted to set a different speed e.g. when it's wet, so we

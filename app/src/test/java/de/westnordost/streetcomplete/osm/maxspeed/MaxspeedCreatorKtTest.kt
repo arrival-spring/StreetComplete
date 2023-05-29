@@ -1095,6 +1095,24 @@ class MaxspeedCreatorKtTest {
         )
     }
 
+    @Test fun `remove maxspeed_variable_max when adding maxspeed and variable limit`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed:variable" to "yes",
+                "maxspeed:variable:max" to "60"
+            ),
+            maxspeedBothDirections(
+                mapOf(null to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null))),
+                null, true
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:variable", "yes", "yes"),
+                StringMapEntryAdd("maxspeed", "60"),
+                StringMapEntryDelete("maxspeed:variable:max", "60")
+            )
+        )
+    }
+
     /* ------------------------------------------------------------------------------------------ */
     /* ------------------------------ different directions -------------------------------------- */
     /* ------------------------------------------------------------------------------------------ */
@@ -2108,6 +2126,27 @@ class MaxspeedCreatorKtTest {
                     "40 @ snow; 30 @ winter; 60 @ weight < 10; 50 @ wet",
                     "40 @ snow; 30 @ winter; 60 @ weight < 10; 50 @ wet"),
                 StringMapEntryAdd("check_date:maxspeed", nowAsCheckDateString())
+            )
+        )
+    }
+
+    @Test fun `applying conditions removes old dedicated conditional tags`() {
+        verifyAnswer(
+            mapOf(
+                "maxspeed:night" to "50",
+                "maxspeed:seasonal:winter" to "40",
+                "maxspeed:wet" to "60"
+            ),
+            maxspeedBothDirections(
+                mapOf(null to mapOf(
+                    Snow to MaxspeedAndType(MaxSpeedSign(Kmh(30)), null)
+                ))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:conditional", "30 @ snow"),
+                StringMapEntryDelete("maxspeed:night", "50"),
+                StringMapEntryDelete("maxspeed:seasonal:winter", "40"),
+                StringMapEntryDelete("maxspeed:wet", "60")
             )
         )
     }

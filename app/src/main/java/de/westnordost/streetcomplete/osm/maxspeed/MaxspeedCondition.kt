@@ -9,6 +9,7 @@ object Wet : Condition
 object Snow : Condition
 object Flashing : Condition
 object Winter : Condition
+object Night : Condition
 data class WeightAndComparison(val weight: Weight, val comparison: Inequality) : Condition
 data class TimeCondition(val times: OpeningHoursRuleList) : Condition
 object NoCondition : Condition
@@ -19,6 +20,7 @@ fun Condition.toOsmValue(): String {
         Snow -> "snow"
         Flashing -> "flashing"
         Winter -> "winter"
+        Night -> "sunset-sunrise"
         is WeightAndComparison -> "weight${comparison.osmValue}$weight"
         is TimeCondition -> times.toString()
         NoCondition -> throw IllegalStateException()
