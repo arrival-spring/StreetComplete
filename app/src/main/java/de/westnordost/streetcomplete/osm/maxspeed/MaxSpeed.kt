@@ -45,6 +45,7 @@ object IsSchoolZone : MaxSpeedAnswer
 object WalkMaxSpeed : MaxSpeedAnswer
 object MaxSpeedIsNone : MaxSpeedAnswer
 object JustSign : MaxSpeedAnswer
+object NoSign : MaxSpeedAnswer
 object Invalid : MaxSpeedAnswer
 
 fun MaxSpeedAnswer.toSpeedOsmValue(): String? {

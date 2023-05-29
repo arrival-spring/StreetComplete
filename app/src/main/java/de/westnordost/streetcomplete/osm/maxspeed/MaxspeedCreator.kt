@@ -4,16 +4,18 @@ import de.westnordost.streetcomplete.osm.Tags
 import de.westnordost.streetcomplete.osm.expandDirections
 import de.westnordost.streetcomplete.osm.hasCheckDateForKey
 import de.westnordost.streetcomplete.osm.lit.applyTo
+import de.westnordost.streetcomplete.osm.lit.createLitStatus
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.UNKNOWN
 import de.westnordost.streetcomplete.osm.mergeDirections
 import de.westnordost.streetcomplete.osm.updateCheckDateForKey
+import de.westnordost.streetcomplete.util.ktx.toYesNo
 
-/** Apply the maxspeed and type for each direction to the given [tags], with optional [vehicleType],
- *  e.g. "hgv" for "maxspeed:hgv. */
-fun ForwardAndBackwardMaxspeedAndType.applyTo(tags: Tags, vehicleType: String?) {
-    if (forward == null && backward == null) return
-    if (forward?.explicit == null && forward?.type == null && backward?.explicit == null && backward?.type == null) return
-    anyTypeIsSigned = (forward?.type is JustSign) || (backward?.type is JustSign)
+fun ForwardAndBackwardAllSpeedInformation.applyTo(tags: Tags) {
+    if (forward == null && backward == null && wholeRoadType == null) return
+    // We want to use the same type key everywhere, but we can't use zone:traffic or zone:maxspeed
+    // if any of the types is "sign", so need to check that here
+    anyTypeIsSigned = determineIfAnyTypeIsSigned(forward) || determineIfAnyTypeIsSigned(backward)
+
     /* for being able to modify only one direction (e.g. `forward` is null while `backward` is not null),
        the directions conflated in the default keys need to be separated first. e.g. `maxspeed=60`
        when forward direction is made `50` should become
@@ -23,12 +25,10 @@ fun ForwardAndBackwardMaxspeedAndType.applyTo(tags: Tags, vehicleType: String?) 
      */
 
     // VEHICLE_TYPES does not contain "null" and we need to expand bare tags
-    (setOf(null) + VEHICLE_TYPES).forEach { tags.expandAllMaxspeedTags(it) }
+    tags.expandAllMaxspeedTags()
 
-    forward?.applyTo(tags, "forward", vehicleType)
-    backward?.applyTo(tags, "backward", vehicleType)
-
-    (setOf(null) + VEHICLE_TYPES).forEach { tags.mergeAllMaxspeedTags(it) }
+    forward.applyTo(tags, "forward")
+    backward.applyTo(tags, "backward")
 
     // Unless an explicit speed limit is provided, changing to a living street or school zone
     // removes all maxspeed tagging because we are in the context of speed limits. So the user was
@@ -37,21 +37,19 @@ fun ForwardAndBackwardMaxspeedAndType.applyTo(tags: Tags, vehicleType: String?) 
     // If the user also provides an explicit maxspeed then we tag the type as "xx:living_street"
     // to make it clear. There is no equivalent accepted tag for school zones, so
     // "hazard=school_zone" suffices
-    if ((forward?.type is LivingStreet || backward?.type is LivingStreet) && forward != backward) {
-        throw IllegalStateException("Living street, but differs by direction")
-    } else if (forward?.type is LivingStreet) {
-        if (vehicleType != null) {
-            throw IllegalStateException("Attempting to tag living street only for certain vehicle, $vehicleType")
+    if (wholeRoadType is LivingStreet) {
+        // Only set type if explicit speed has been given or if it is a school zone
+        // (school zone takes  precedence over living street in parsing because there's no speed
+        // limit type tag for school zones)
+        val typeKeyForward = getTypeKey(tags, null, ":forward")
+        val typeKeyBackward = getTypeKey(tags, null, ":backward")
+        if (isSchoolZone(tags) || forward?.vehicles?.get(null)?.get(NoCondition)?.explicit != null) {
+            tags[typeKeyForward] = wholeRoadType.toTypeOsmValue()!!
         }
-        // Explicit value has already been set above, if it was provided
-        // Type has been set as "xx:living_street" - remove that if there is no explicit value
-        // Also keep type if it is a school zone (school zone takes  precedence over living street
-        // in parsing because there's no speed limit type tag for school zones)
-        if (forward.explicit == null && !isSchoolZone(tags)) {
-            MAXSPEED_TYPE_KEYS.forEach {
-                if (tags[it]?.let { it1 -> isLivingStreetMaxspeed(it1) } == true) { tags.remove(it) }
-            }
+        if (isSchoolZone(tags) || backward?.vehicles?.get(null)?.get(NoCondition)?.explicit != null) {
+            tags[typeKeyBackward] = wholeRoadType.toTypeOsmValue()!!
         }
+
         // Don't change highway type if "living_street" is set
         if (tags["highway"] != "living_street" && tags["living_street"] != "yes") {
             tags["highway"] = "living_street"
@@ -60,31 +58,126 @@ fun ForwardAndBackwardMaxspeedAndType.applyTo(tags: Tags, vehicleType: String?) 
             tags.remove("living_street")
         }
     }
-    if ((forward?.type is IsSchoolZone || backward?.type is IsSchoolZone) && forward != backward) {
-        // zones surely apply to whole road, not just directions
-        // also, hazard:forward and :backward=school_zone have not been used at all
-        throw IllegalStateException("School zone, but differs by direction")
-    } else if (forward?.type is IsSchoolZone) {
-        if (vehicleType != null) {
-            throw IllegalStateException("Attempting to tag school zone only for certain vehicle, $vehicleType")
-        }
+
+    tags.mergeAllMaxspeedTags()
+
+    if (wholeRoadType is IsSchoolZone) {
         tags["hazard"] = "school_zone"
-        tags.removeMaxspeedTypeTaggingForAllVehiclesAndDirections()
+        tags.removeMaxspeedTypeTaggingForAllVehiclesAndDirections(null)
+        tags.removeMaxspeedTypeTaggingForAllVehiclesAndDirections("conditional")
     }
 
+    // TODO: hmm, this sets check date for maxspeed, even if it is a school zone/living street
+    // But fine to be setting it when actually putting in directions/type/whatever
     // update check date
     if (!tags.hasChanges || tags.hasCheckDateForKey("maxspeed")) {
         tags.updateCheckDateForKey("maxspeed")
     }
 }
 
-private fun Tags.expandAllMaxspeedTags(vehicleType: String?) {
+private fun AllSpeedInformation?.applyTo(tags: Tags, direction: String?) {
+    if (this == null) {
+        tags.removeMaxspeedTaggingForAllVehicles(direction, null)
+        tags.removeMaxspeedTaggingForAllVehicles(direction, "conditional")
+        tags.removeMaxspeedTypeTaggingForAllVehicles(direction, null)
+        tags.removeMaxspeedTypeTaggingForAllVehicles(direction, "conditional")
+        return
+    }
+    val dir = if (direction != null) ":$direction" else ""
+
+    this.vehicles?.forEach { (k, v) -> v?.applyTo(tags, direction, k) }
+
+    // Remove maxspeed tagging for any vehicles not specified
+    (setOf(null) + VEHICLE_TYPES).forEach {
+        if (this.vehicles?.contains(it) == false || this.vehicles == null) {
+            tags.removeMaxspeedTagging(direction, it, null)
+            tags.removeMaxspeedTagging(direction, it, "conditional")
+            tags.removeMaxspeedTypeTagging(direction, it, null)
+            tags.removeMaxspeedTypeTagging(direction, it, "conditional")
+        }
+    }
+
+    if (this.advisory == null) {
+        tags.remove("maxspeed:advisory$dir")
+        tags.remove("maxspeed:advised$dir")
+    } else {
+        this.advisory.applyTo(tags, direction)
+        tags.remove("maxspeed:advised$dir")
+    }
+
+    if (this.variable == null) {
+        tags.remove("maxspeed:variable$dir")
+    } else {
+        tags["maxspeed:variable$dir"] = this.variable.toVariableLimit(tags, direction)
+    }
+}
+
+private fun AdvisorySpeedSign.applyTo(tags: Tags, direction: String?) {
+    val dir = if (direction != null) ":$direction" else ""
+    val advisoryKey = "maxspeed:advisory$dir"
+    // Doesn't matter what the previous type key was, as getTypeKey only needs that to check if it's "maxspeed"
+    val typeKey = getTypeKey(tags, null, ":advisory$dir")
+    tags[advisoryKey] = this.value.toString()
+    tags[typeKey] = "sign"
+}
+
+private fun Boolean.toVariableLimit(tags: Tags, direction: String?): String {
+    val dir = if (direction != null) ":$direction" else ""
+    val previousValue = tags["maxspeed:variable$dir"] ?: return this.toYesNo()
+    return when (previousValue) {
+        "no" -> this.toYesNo()
+        "yes" -> this.toYesNo()
+        else -> {
+            // Anything other than "yes" is a more specific way of saying yes, so preserve previous value
+            if (this) previousValue
+            else "no"
+        }
+    }
+}
+
+private fun Map<Condition, MaxspeedAndType?>.applyTo(tags: Tags, direction: String?, vehicleType: String?) {
+    val dir = if (direction != null) ":$direction" else ""
+    val veh = if (vehicleType != null) ":$vehicleType" else ""
+    val conditionalKey = "maxspeed$veh$dir:conditional"
+    val taggings = mutableListOf<String>()
+
+    // Don't change the value if nothing has changed
+    val previousConditional = createConditionalMaxspeed(tags, direction, vehicleType)
+    if (this == previousConditional) return
+
+    // Be consistent throughout with use of brackets
+    val useBrackets = this.keys.any { it.needsBrackets() }
+
+    this.forEach {
+        when (it.key) {
+            NoCondition -> it.value.applyTo(tags, direction, vehicleType)
+            else -> {
+                val osmValue = it.value?.explicit?.toSpeedOsmValue() ?: return@forEach
+                if (useBrackets) taggings.add("$osmValue @ (${it.key.toOsmValue()})")
+                else taggings.add("$osmValue @ ${it.key.toOsmValue()}")
+            }
+        }
+    }
+    if (taggings.isEmpty()) {
+        tags.removeMaxspeedTagging(direction, vehicleType, "conditional")
+        tags.removeMaxspeedTypeTagging(direction, vehicleType, "conditional")
+    } else {
+        // Existing practice appears to be that you start with the fastest speed and decrease
+        taggings.sortByDescending { it.split(" ")[0].toInt() }
+        tags[conditionalKey] = taggings.joinToString("; ")
+    }
+}
+
+private fun Tags.expandAllMaxspeedTags() {
+    (setOf(null) + VEHICLE_TYPES).forEach { this.expandMaxspeedTags(it) }
+}
+
+private fun Tags.expandMaxspeedTags(vehicleType: String?) {
     val veh = if (vehicleType != null) ":$vehicleType" else ""
     MAXSPEED_KEYS.forEach {
         this.expandDirections("$it$veh", null)
         this.expandDirections("$it$veh", "conditional")
-        this.expandDirections("$it$veh", "lanes")
-        this.expandDirections("$it$veh", "lanes:conditional")
+        this.expandDirections("$it$veh", "signed")
     }
     MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach {
         this.expandDirections("$it$veh", null)
@@ -97,13 +190,16 @@ private fun Tags.expandAllMaxspeedTags(vehicleType: String?) {
     }
 }
 
-private fun Tags.mergeAllMaxspeedTags(vehicleType: String?) {
+private fun Tags.mergeAllMaxspeedTags() {
+    (setOf(null) + VEHICLE_TYPES).forEach { this.mergeMaxspeedTags(it) }
+}
+
+private fun Tags.mergeMaxspeedTags(vehicleType: String?) {
     val veh = if (vehicleType != null) ":$vehicleType" else ""
     MAXSPEED_KEYS.forEach {
         this.mergeDirections("$it$veh", null)
         this.mergeDirections("$it$veh", "conditional")
-        this.mergeDirections("$it$veh", ":lanes")
-        this.mergeDirections("$it$veh", ":lanes:conditional")
+        this.mergeDirections("$it$veh", "signed")
     }
     // Only merge type tags if directions have been merged
     // i.e. maxspeed:forward=xx maxspeed:backward=yy should be combined with
@@ -111,28 +207,33 @@ private fun Tags.mergeAllMaxspeedTags(vehicleType: String?) {
     MAXSPEED_TYPE_KEYS.forEach {
         if (!directionsExistAndDiffer(this, veh)) {
             this.mergeDirections("$it$veh", null)
+        }
+        if (!directionsExistAndDiffer(this, "$veh:advisory")) {
+            this.mergeDirections("$it$veh:advisory", null)
+        }
+        if (!directionsExistAndDiffer(this, "$veh:conditional")) {
             this.mergeDirections("$it$veh", "conditional")
         }
     }
 }
 
 private fun directionsExistAndDiffer(tags: Tags, veh: String): Boolean {
-    return tags["maxspeed$veh:forward"] != null &&
-        tags["maxspeed$veh:backward"] != null &&
-        tags["maxspeed$veh:forward"] != tags["maxspeed$veh:backward"]
+    return tags["maxspeed$veh:forward"] != null
+        && tags["maxspeed$veh:backward"] != null
+        && tags["maxspeed$veh:forward"] != tags["maxspeed$veh:backward"]
 }
 
-/** Return a single type key that was used before for the given postfix [post] to "maxspeed"
+/** Return a single type key that was used before for the given [postfix] to "maxspeed"
  *  In the case of multiple values existing, take the first one in the order of preference of
  *  type:maxspeed, source:maxspeed, zone:maxspeed and zone:traffic
  *  Will only be source:maxspeed if it was used for type before (not a special value or source value)
  *  null if no such key exists */
-private fun getPreviousTypeKey(tags: Tags, post: String, explicitValueGiven: Boolean, isSignedZone: Boolean): String? {
-    val speedKey = "maxspeed$post"
-    val maxspeedTypeKey = "maxspeed:type$post"
-    val sourceMaxspeedKey = "source:maxspeed$post"
-    val zoneMaxspeedKey = "zone:maxspeed$post"
-    val zoneTrafficKey = "zone:traffic$post"
+private fun getPreviousTypeKey(tags: Tags, postfix: String, explicitValueGiven: Boolean, isSignedZone: Boolean): String? {
+    val speedKey = "maxspeed$postfix"
+    val maxspeedTypeKey = "maxspeed:type$postfix"
+    val sourceMaxspeedKey = "source:maxspeed$postfix"
+    val zoneMaxspeedKey = "zone:maxspeed$postfix"
+    val zoneTrafficKey = "zone:traffic$postfix"
 
     return when {
         // Use "maxspeed" for type if it was used before and there is no numerical speed limit to tag
@@ -183,27 +284,35 @@ private fun canUseSourceMaxspeedForType(tags: Tags): Boolean {
     return anyIsValid && allCanBeRemoved
 }
 
-fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null, vehicleType: String? = null) {
+private fun MaxspeedAndType?.applyTo(tags: Tags, direction: String? = null, vehicleType: String? = null) {
+    if (this == null || ( this.type == null && this.explicit == null )) {
+        tags.removeMaxspeedTagging(direction, vehicleType, null)
+        tags.removeMaxspeedTypeTagging(direction, vehicleType, null)
+        return
+    }
     val dir = if (direction != null) ":$direction" else ""
     val veh = if (vehicleType != null) ":$vehicleType" else ""
-    val post = "$veh$dir"
-    val speedKey = "maxspeed$post"
+    val postfix = "$veh$dir"
+    val speedKey = "maxspeed$postfix"
     val previousSpeedOsmValue = tags[speedKey]
+    val zoneMaxspeedKey = "zone:maxspeed$postfix"
 
-    val zoneMaxspeedKey = "zone:maxspeed$post"
+    when {
+        type is ImplicitMaxSpeed && type.roadType == UNKNOWN -> throw IllegalStateException()
+        type is NoSign -> {
+            tags["maxspeed$postfix:signed"] = "no"
+            return
+        }
+    }
 
     // e.g. "maxspeed="RU:zone30" and "maxspeed:type=sign" is valid as a zone can be signed
     val isSignedZone = explicit is MaxSpeedZone && type is JustSign
     // previousTypeKey would give "maxspeed", so get the next best
-    val signedZoneKey = getTypeKey(tags, null, post)
+    val signedZoneKey = getTypeKey(tags, null, postfix)
 
-    // Take a single type key in this order of preference
-    val previousTypeKey = getPreviousTypeKey(tags, post, explicit != null, isSignedZone)
-
+    val previousTypeKey = getPreviousTypeKey(tags, postfix, explicit != null, isSignedZone)
     val previousTypeOsmValue = tags[previousTypeKey]
-
-    // Use the same type key as before, or else use "maxspeed:type"
-    val typeKey = getTypeKey(tags, previousTypeKey, post)
+    val typeKey = getTypeKey(tags, previousTypeKey, postfix)
 
     // We may have a maxspeed zone in type and no explicit value given
     val speedOsmValue = explicit?.toSpeedOsmValue() ?: type?.toSpeedOsmValue()
@@ -215,30 +324,17 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null, vehicleType: 
         else -> type?.toTypeOsmValue()
     }
 
-    // TODO put this somewhere else or deal with it better
-    if (type is ImplicitMaxSpeed && type.roadType == UNKNOWN) {
-        throw IllegalStateException("Attempting to tag unknown road type")
-    }
+    /* ---------------------------------- clean up old tags ------------------------------------- */
 
     // maxspeed is now not set
     // do this first in case "maxspeed" is used for the type
     if (speedOsmValue == null && previousSpeedOsmValue != null) {
-        when {
-            vehicleType == null && direction == null -> tags.removeMaxspeedTaggingForAllVehiclesAndDirections()
-            vehicleType == null -> tags.removeMaxspeedTaggingForAllVehicles(direction)
-            direction == null -> tags.removeMaxspeedTaggingForAllDirections(vehicleType)
-            else -> tags.removeMaxspeedTagging(direction, vehicleType)
-        }
+        tags.removeMaxspeedTagging(direction, vehicleType, null)
     }
 
     // If there is no type or type has not changed we should still clean up the tagging
     if (typeOsmValue == null || typeOsmValue == previousTypeOsmValue) {
-        when {
-            vehicleType == null && direction == null -> tags.removeMaxspeedTypeTaggingForAllVehiclesAndDirections()
-            vehicleType == null -> tags.removeMaxspeedTypeTaggingForAllVehicles(direction)
-            direction == null -> tags.removeMaxspeedTypeTaggingForAllDirections(vehicleType)
-            else -> tags.removeMaxspeedTypeTagging(direction, vehicleType)
-        }
+        tags.removeMaxspeedTypeTagging(direction, vehicleType, null)
         if (typeOsmValue != null) {
             tags[typeKey] = typeOsmValue
         } else if (previousTypeOsmValue != null) {
@@ -246,36 +342,21 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null, vehicleType: 
         }
     }
 
+    /* ---------------------------------- maxspeed type ----------------------------------------- */
+
     // if type has changed then remove all possible old tagging
     if (typeOsmValue != null && typeOsmValue != previousTypeOsmValue) {
-        when {
-            vehicleType == null && direction == null -> {
-                tags.removeMaxspeedTaggingForAllVehiclesAndDirections()
-                tags.removeMaxspeedTypeTaggingForAllVehiclesAndDirections()
-            }
-            vehicleType == null -> {
-                tags.removeMaxspeedTaggingForAllVehicles(direction)
-                tags.removeMaxspeedTypeTaggingForAllVehicles(direction)
-            }
-            direction == null -> {
-                tags.removeMaxspeedTaggingForAllDirections(vehicleType)
-                tags.removeMaxspeedTypeTaggingForAllDirections(vehicleType)
-            }
-            else -> {
-                tags.removeMaxspeedTagging(direction, vehicleType)
-                tags.removeMaxspeedTypeTagging(direction, vehicleType)
-            }
-        }
+        tags.removeMaxspeedTagging(direction, vehicleType, null)
+        tags.removeMaxspeedTypeTagging(direction, vehicleType, null)
 
         tags[typeKey] = typeOsmValue
-        if (isSignedZone) {
-            tags[signedZoneKey] = "sign"
+
+        when {
+            isSignedZone -> tags[signedZoneKey] = "sign"
+            type is JustSign -> tags.remove("maxspeed$postfix:signed")
+            type is ImplicitMaxSpeed && type.lit != createLitStatus(tags) -> type.lit?.applyTo(tags)
         }
-        // TODO what if different vehicles or directions provide different lit values? (lit:forward and lit:backward do not exist), obviously
-        if (type is ImplicitMaxSpeed) {
-            // Lit is either already set or has been answered by the user, so this wouldn't change the value of the lit tag
-            type.lit?.applyTo(tags)
-        }
+
         // If user was shown that it was a school zone and selected something else, remove school zone tag
         // Checking if it's a living street because user was also shown it as a school zone if there was
         // no type tagged but it was a living street
@@ -285,13 +366,12 @@ fun MaxspeedAndType.applyTo(tags: Tags, direction: String? = null, vehicleType: 
         }
     }
 
+    /* ---------------------------------- explicit maxspeed ------------------------------------- */
+
     // if maxspeed has changed remove all old maxspeed tagging but not type tagging
     // if it's a signed maxspeed zone then don't remove the (just tagged) "maxspeed=XX:zoneyy"
     if (speedOsmValue != null && speedOsmValue != previousSpeedOsmValue && !isSignedZone) {
-        when (vehicleType) {
-            null -> tags.removeMaxspeedTaggingForAllVehicles(direction)
-            else -> tags.removeMaxspeedTagging(direction, vehicleType)
-        }
+        tags.removeMaxspeedTagging(direction, vehicleType, null)
         tags[speedKey] = speedOsmValue
     }
 }
@@ -305,50 +385,47 @@ private fun canThisSourceMaxspeedBeRemoved(value: String?): Boolean {
     }
 }
 
-private fun Tags.removeMaxspeedTagging(direction: String?, vehicleType: String?) {
+private fun Tags.removeMaxspeedTagging(direction: String?, vehicleType: String?, post: String?) {
     val dir = if (direction != null) ":$direction" else ""
     val veh = if (vehicleType != null) ":$vehicleType" else ""
-    MAXSPEED_KEYS.forEach { remove("$it$veh$dir") }
-    MAXSPEED_KEYS.forEach { remove("$it$veh$dir:conditional") }
-    MAXSPEED_KEYS.forEach { remove("$it$veh$dir:lanes") }
-    MAXSPEED_KEYS.forEach { remove("$it$veh$dir:lanes:conditional") }
+    val suffix = if (post != null) ":$post" else ""
+    remove("maxspeed$veh$dir$suffix")
 }
 
-private fun Tags.removeMaxspeedTaggingForAllVehicles(direction: String?) {
-    (setOf(null) + VEHICLE_TYPES).forEach { this.removeMaxspeedTagging(direction, it) }
+private fun Tags.removeMaxspeedTaggingForAllVehicles(direction: String?, postfix: String?) {
+    (setOf(null) + VEHICLE_TYPES).forEach { this.removeMaxspeedTagging(direction, it, postfix) }
 }
 
-private fun Tags.removeMaxspeedTaggingForAllDirections(vehicleType: String?) {
-    DIRECTIONS.forEach { this.removeMaxspeedTagging(it, vehicleType) }
+private fun Tags.removeMaxspeedTaggingForAllVehiclesAndDirections(postfix: String?) {
+    DIRECTIONS.forEach { this.removeMaxspeedTaggingForAllVehicles(it, postfix) }
 }
 
-private fun Tags.removeMaxspeedTaggingForAllVehiclesAndDirections() {
-    DIRECTIONS.forEach { this.removeMaxspeedTaggingForAllVehicles(it) }
-}
-
-private fun Tags.removeMaxspeedTypeTagging(direction: String?, vehicleType: String?) {
+private fun Tags.removeMaxspeedTypeTagging(direction: String?, vehicleType: String?, postfix: String?) {
     val dir = if (direction != null) ":$direction" else ""
     val veh = if (vehicleType != null) ":$vehicleType" else ""
-    MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach {
-        remove("$it$veh$dir")
-        remove("$it$veh$dir:conditional")
-    }
-    if (canThisSourceMaxspeedBeRemoved(this["source:maxspeed$veh$dir"])) {
-        remove("source:maxspeed$veh$dir")
-        remove("source:maxspeed$veh$dir:conditional")
+    val suffix = if (postfix != null) ":$postfix" else ""
+    MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach { remove("$it$veh$dir$suffix") }
+    if (canThisSourceMaxspeedBeRemoved(this["source:maxspeed$veh$dir$suffix"])) {
+        remove("source:maxspeed$veh$dir$suffix")
     }
 }
 
-private fun Tags.removeMaxspeedTypeTaggingForAllVehicles(direction: String?) {
-    (setOf(null) + VEHICLE_TYPES).forEach { this.removeMaxspeedTypeTagging(direction, it) }
+private fun Tags.removeMaxspeedTypeTaggingForAllVehicles(direction: String?, post: String?) {
+    (setOf(null) + VEHICLE_TYPES).forEach { this.removeMaxspeedTypeTagging(direction, it, post) }
 }
 
-private fun Tags.removeMaxspeedTypeTaggingForAllDirections(vehicleType: String?) {
-    DIRECTIONS.forEach { this.removeMaxspeedTypeTagging(it, vehicleType) }
+private fun Tags.removeMaxspeedTypeTaggingForAllVehiclesAndDirections(post: String?) {
+    DIRECTIONS.forEach { this.removeMaxspeedTypeTaggingForAllVehicles(it, post) }
 }
 
-private fun Tags.removeMaxspeedTypeTaggingForAllVehiclesAndDirections() {
-    DIRECTIONS.forEach { this.removeMaxspeedTypeTaggingForAllVehicles(it) }
+private fun determineIfAnyTypeIsSigned(allSpeedInformation: AllSpeedInformation?): Boolean {
+    if (allSpeedInformation == null) return false
+    allSpeedInformation.vehicles?.forEach {
+        it.value?.forEach { v ->
+            if (v.value?.type is JustSign) return true
+        }
+    }
+    return false
 }
 
 private val DIRECTIONS = setOf(

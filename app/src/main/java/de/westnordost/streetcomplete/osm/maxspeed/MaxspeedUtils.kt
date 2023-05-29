@@ -14,6 +14,7 @@ val MAXSPEED_KEYS = setOf(
     "maxspeed",
     "maxspeed:advisory",
     "maxspeed:advised",
+    "maxspeed:variable"
 )
 
 val MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE = setOf(

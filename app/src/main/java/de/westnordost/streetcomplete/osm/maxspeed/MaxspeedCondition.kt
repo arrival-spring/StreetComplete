@@ -25,6 +25,11 @@ fun Condition.toOsmValue(): String {
     }
 }
 
+fun Condition.needsBrackets(): Boolean {
+    if (this is NoCondition) return  false
+    return this.toOsmValue().contains(";")
+}
+
 enum class Inequality(val osmValue: String?) {
     LESS_THAN("<"),
     MORE_THAN(">"),
