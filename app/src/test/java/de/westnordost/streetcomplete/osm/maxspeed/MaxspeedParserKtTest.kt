@@ -794,6 +794,10 @@ class MaxspeedParserKtTest {
             maxspeedBothDirections(null, AdvisorySpeedSign(Mph(50)), null, null),
             parse("maxspeed:advisory" to "50 mph")
         )
+        assertEquals(
+            maxspeedBothDirections(null, AdvisorySpeedSign(Kmh(50)), null, null),
+            parse("maxspeed:advised" to "50")
+        )
     }
 
     @Test fun `advisory limit in one direction`() {

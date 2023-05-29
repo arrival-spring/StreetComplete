@@ -67,7 +67,7 @@ private fun createForwardAndBackwardAdvisorySpeedSign(tags: Map<String, String>)
 // so only creating for the blank tag
 private fun createAdvisoryMaxspeed(tags: Map<String, String>, direction: String?): AdvisorySpeedSign? {
     val dir = if (direction != null) ":$direction" else ""
-    val speed = createExplicitMaxspeed(tags["maxspeed:advisory$dir"])
+    val speed = createExplicitMaxspeed(tags["maxspeed:advisory$dir"]) ?: createExplicitMaxspeed(tags["maxspeed:advised$dir"])
     if (speed !is MaxSpeedSign) return null
     return AdvisorySpeedSign(speed.value)
 }
