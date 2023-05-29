@@ -28,11 +28,6 @@ data class ForwardAndBackwardMaxspeedAndType(val forward: MaxspeedAndType?, val 
 
 data class MaxspeedAndType(val explicit: MaxSpeedAnswer?, val type: MaxSpeedAnswer?)
 
-// TODO: this
-// fun MaxspeedAndType.isValidInBothDirections(): Boolean =
-//     type in listOf(MaxSpeedSign, AdvisorySpeedSign, ImplicitMaxSpeed, WalkMaxSpeed)
-// to not include living street, school zone...
-
 sealed interface MaxSpeedAnswer
 
 data class MaxSpeedSign(val value: Speed) : MaxSpeedAnswer

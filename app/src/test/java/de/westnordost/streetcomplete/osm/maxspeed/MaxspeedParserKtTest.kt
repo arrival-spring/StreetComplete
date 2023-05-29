@@ -328,6 +328,23 @@ class MaxspeedParserKtTest {
         )
     }
 
+    @Test fun `unsigned maxspeed`() {
+        assertEquals(
+            bareMaxspeedBothDirections(null, NoSign, null),
+            parse("maxspeed:signed" to "no")
+        )
+    }
+
+    @Test fun `unsigned maxspeed with implicit type also tagged`() {
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            parseDE(
+                "maxspeed:type" to "DE:urban",
+                "maxspeed:signed" to "no"
+            )
+        )
+    }
+
     @Test fun `unknown road type`() {
         assertEquals(
             bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", UNKNOWN, null), null),
@@ -1399,6 +1416,27 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoVehiclesBothDirections(
+                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ when flashing")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ flashing light")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ 'flashing'")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
                 mapOf(Wet to MaxspeedAndType(MaxSpeedSign(Mph(40)), null)),
                 null, null, null
             ),
@@ -2171,7 +2209,12 @@ private fun maxspeedBothDirections(
         wholeRoadType
     )
 
-private fun maxspeedNoVehiclesBothDirections(conditions: Map<Condition, MaxspeedAndType?>?, advisory: AdvisorySpeedSign?, variable: Boolean?, wholeRoadType: MaxSpeedAnswer?) =
+private fun maxspeedNoVehiclesBothDirections(
+    conditions: Map<Condition, MaxspeedAndType?>?,
+    advisory: AdvisorySpeedSign?,
+    variable: Boolean?,
+    wholeRoadType: MaxSpeedAnswer?
+) =
     ForwardAndBackwardAllSpeedInformation(
         AllSpeedInformation(mapOf(null to conditions), advisory, variable),
         AllSpeedInformation(mapOf(null to conditions), advisory, variable),

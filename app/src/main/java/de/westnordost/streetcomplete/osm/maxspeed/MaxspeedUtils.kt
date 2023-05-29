@@ -20,7 +20,8 @@ val MAXSPEED_KEYS = setOf(
 val MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE = setOf(
     "maxspeed:type",
     "zone:maxspeed",
-    "zone:traffic"
+    "zone:traffic",
+    "maxspeed:signed"
 )
 
 val MAXSPEED_TYPE_KEYS = setOf(
@@ -90,7 +91,7 @@ private fun getCondition(condition: String?): Condition? {
     return when {
         condition == "snow" -> Snow
         condition == "wet" -> Wet
-        condition == "flashing" -> Flashing
+        isFlashing(condition) -> Flashing
         condition == "winter" -> Winter
         condition.startsWith("weight") -> getWeightAndComparison(condition)
         conditionAsOpeningHours != null -> TimeCondition(condition.toOpeningHoursRules()!!)
@@ -98,7 +99,24 @@ private fun getCondition(condition: String?): Condition? {
     }
 }
 
-fun getWeightAndComparison(value: String?): WeightAndComparison? {
+private fun isFlashing(condition: String?): Boolean {
+    return when (condition) {
+        "flashing" -> true
+        "'flashing'" -> true
+        "when flashing" -> true
+        "when_flashing" -> true
+        "\"when flashing\"" -> true
+        "flashing light" -> true
+        "flashing_light" -> true
+        "flashing lights" -> true
+        "flashing_lights" -> true
+        "\"flashing\";␣PH␣off;␣SH␣off" -> true
+        "flashing;␣SH␣off" -> true
+        else -> false
+    }
+}
+
+private fun getWeightAndComparison(value: String?): WeightAndComparison? {
     if (value == null) return null
     val matchResult = weightRegex.matchEntire(value) ?: return null
     val inequalityValue = matchResult.groupValues[1]
