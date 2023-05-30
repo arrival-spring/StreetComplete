@@ -384,6 +384,14 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
     if (speedOsmValue != null && speedOsmValue != previousSpeedOsmValue && !isSignedZone) {
         tags.removeMaxspeedTagging(direction, vehicleType, null)
         tags[speedKey] = speedOsmValue
+        val practicalMaxspeed = createExplicitMaxspeed(tags["maxspeed:practical$postfix"])
+        if (
+            practicalMaxspeed is MaxSpeedSign
+            && this.explicit is MaxSpeedSign
+            && practicalMaxspeed.value.toKmh() > this.explicit.value.toKmh()
+        ) {
+            tags.remove("maxspeed:practical$postfix")
+        }
     }
 }
 

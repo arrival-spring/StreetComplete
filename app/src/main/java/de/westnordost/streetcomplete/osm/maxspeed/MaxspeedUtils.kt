@@ -12,6 +12,7 @@ val MAXSPEED_KEYS = setOf(
     "maxspeed",
     "maxspeed:advisory",
     "maxspeed:advised",
+    "maxspeed:practical",
     "maxspeed:variable"
 )
 

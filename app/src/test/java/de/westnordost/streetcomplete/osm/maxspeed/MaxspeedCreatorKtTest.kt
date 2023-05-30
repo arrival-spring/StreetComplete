@@ -921,6 +921,44 @@ class MaxspeedCreatorKtTest {
         )
     }
 
+    @Test fun `remove maxspeed_practical if it is more than the new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical" to "100"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(80)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:practical", "100"),
+                StringMapEntryAdd("maxspeed", "80")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:practical" to "50 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(30)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:practical", "50 mph"),
+                StringMapEntryAdd("maxspeed", "30 mph")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_practical if it is less than the new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical" to "100"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(120)), null),
+            arrayOf(
+                StringMapEntryModify("maxspeed:practical", "100", "100"),
+                StringMapEntryAdd("maxspeed", "120")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:practical" to "50 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(60)), null),
+            arrayOf(
+                StringMapEntryModify("maxspeed:practical", "50 mph", "50 mph"),
+                StringMapEntryAdd("maxspeed", "60 mph")
+            )
+        )
+    }
+
     /* ------------------------------------------------------------------------------------------ */
     /* ------------------------------ advisory maxspeed ----------------------------------------- */
     /* ------------------------------------------------------------------------------------------ */
