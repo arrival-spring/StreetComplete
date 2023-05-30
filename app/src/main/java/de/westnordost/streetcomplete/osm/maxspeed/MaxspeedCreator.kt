@@ -332,7 +332,14 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
     val typeOsmValue = when {
         typeKey == zoneMaxspeedKey -> type?.toTypeOsmValueZoneMaxspeed()
         isSignedZone -> explicit?.toTypeOsmValue()
-        else -> type?.toTypeOsmValue()
+        else -> {
+            // If previous type had vehicle suffix then keep that
+            if (getVehicleFromMaxspeedType(previousTypeOsmValue) == null) {
+                type?.toTypeOsmValue()
+            } else {
+                "${type?.toTypeOsmValue()}$veh"
+            }
+        }
     }
 
     /* ---------------------------------- clean up old tags ------------------------------------- */

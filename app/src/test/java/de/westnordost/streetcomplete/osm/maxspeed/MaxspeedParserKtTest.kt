@@ -326,6 +326,20 @@ class MaxspeedParserKtTest {
         )
     }
 
+    @Test fun `implicit maxspeed with vehicle suffix`() {
+        assertEquals(
+            maxspeedBothDirections(
+                mapOf("hgv" to
+                    mapOf(
+                        NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null))
+                    )
+                ),
+                null, null, null
+            ),
+            parseDE("maxspeed:type:hgv" to "DE:urban:hgv")
+        )
+    }
+
     @Test fun `unsigned maxspeed`() {
         assertEquals(
             bareMaxspeedBothDirections(null, NoSign, null),

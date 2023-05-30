@@ -72,7 +72,8 @@ enum class Direction(val osmValue: String) {
     }
 }
 
-private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.*)")
+// source:maxspeed sometimes has a suffix of vehicle type
+private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.+?)(:.+)?\$")
 private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?([0-9]+)")
 private val livingStreetRegex = Regex("([A-Z-]+-?[A-Z]*):(?:living_street)?")
 private val mphRegex = Regex("([0-9]+) mph")
@@ -201,6 +202,14 @@ fun isSchoolZone(tags: Map<String, String>): Boolean {
 fun getCountryCodeFromMaxspeedType(value: String): String? {
     val matchResult = implicitRegex.matchEntire(value) ?: return null
     return matchResult.groupValues[1]
+}
+
+fun getVehicleFromMaxspeedType(value: String?): String? {
+    if (value == null) return null
+    val matchResult = implicitRegex.matchEntire(value) ?: return null
+    val vehicle = matchResult.groupValues[3]
+    return if (vehicle == "") null
+    else vehicle
 }
 
 fun isValidMaxspeedType(value: String?): Boolean {

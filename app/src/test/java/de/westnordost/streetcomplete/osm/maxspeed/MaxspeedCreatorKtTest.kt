@@ -244,6 +244,20 @@ class MaxspeedCreatorKtTest {
         )
     }
 
+    @Test fun `keep vehicle suffix on type value if used before`() {
+        verifyAnswer(
+            mapOf("maxspeed:type:hgv" to "DE:urban:hgv"),
+            maxspeedBothDirections(
+                mapOf("hgv" to
+                    mapOf(NoCondition to
+                        MaxspeedAndType(null, ImplicitMaxSpeed("DE", RURAL, null))
+                    )
+                )
+            ),
+            arrayOf(StringMapEntryModify("maxspeed:type:hgv", "DE:urban:hgv", "DE:rural:hgv"))
+        )
+    }
+
     /* ----------------------------------- change to zone --------------------------------------- */
 
     @Test fun `change one zone maxspeed to another`() {
