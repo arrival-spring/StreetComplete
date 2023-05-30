@@ -6,8 +6,6 @@ import de.westnordost.streetcomplete.osm.lit.LitStatus.*
 import de.westnordost.streetcomplete.osm.maxspeed.Inequality.*
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.osm.weight.*
-import de.westnordost.streetcomplete.quests.max_speed.Kmh
-import de.westnordost.streetcomplete.quests.max_speed.Mph
 import de.westnordost.streetcomplete.testutils.mock
 import de.westnordost.streetcomplete.testutils.on
 import org.junit.Assert.assertEquals
@@ -1808,7 +1806,9 @@ class MaxspeedParserKtTest {
                     null, null
                 ),
                 AllSpeedInformation(
-                    mapOf(null to mapOf(WeightAndComparison(MetricTons(3.5), LESS_THAN) to MaxspeedAndType(MaxSpeedSign(Kmh(30)), null))),
+                    mapOf(null to mapOf(WeightAndComparison(MetricTons(3.5), LESS_THAN) to MaxspeedAndType(MaxSpeedSign(
+                        Kmh(30)
+                    ), null))),
                     null, null
                 ),
                 null

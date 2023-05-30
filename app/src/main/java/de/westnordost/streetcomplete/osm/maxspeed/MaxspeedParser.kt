@@ -1,8 +1,7 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
-import de.westnordost.streetcomplete.quests.max_speed.Kmh
-import de.westnordost.streetcomplete.quests.max_speed.Mph
+import de.westnordost.streetcomplete.osm.maxspeed.Direction.*
 import kotlin.math.roundToInt
 
 fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, countryInfo: CountryInfo): ForwardAndBackwardAllSpeedInformation? {
@@ -51,9 +50,9 @@ fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, count
 /** Combines directions of advisory speeds, returns null if there is no tagging or if the
  *  tagging is invalid, e.g. maxspeed:advisory= and maxspeed:advisory:forward= */
 private fun createForwardAndBackwardAdvisorySpeedSign(tags: Map<String, String>): ForwardAndBackwardAdvisorySpeedSign? {
-    val forward = createAdvisoryMaxspeed(tags, "forward")
-    val backward = createAdvisoryMaxspeed(tags, "backward")
-    val both = createAdvisoryMaxspeed(tags, null)
+    val forward = createAdvisoryMaxspeed(tags, FORWARD)
+    val backward = createAdvisoryMaxspeed(tags, BACKWARD)
+    val both = createAdvisoryMaxspeed(tags, BOTH)
 
     return when {
         both == null && forward == null && backward == null -> null
@@ -65,9 +64,8 @@ private fun createForwardAndBackwardAdvisorySpeedSign(tags: Map<String, String>)
 
 // maxspeed:advisory has not been used for different vehicles (other than 12 times for bicycle),
 // so only creating for the blank tag
-private fun createAdvisoryMaxspeed(tags: Map<String, String>, direction: String?): AdvisorySpeedSign? {
-    val dir = if (direction != null) ":$direction" else ""
-    val speed = createExplicitMaxspeed(tags["maxspeed:advisory$dir"]) ?: createExplicitMaxspeed(tags["maxspeed:advised$dir"])
+private fun createAdvisoryMaxspeed(tags: Map<String, String>, direction: Direction): AdvisorySpeedSign? {
+    val speed = createExplicitMaxspeed(tags["maxspeed:advisory$direction"]) ?: createExplicitMaxspeed(tags["maxspeed:advised$direction"])
     if (speed !is MaxSpeedSign) return null
     return AdvisorySpeedSign(speed.value)
 }
@@ -75,9 +73,9 @@ private fun createAdvisoryMaxspeed(tags: Map<String, String>, direction: String?
 /** Returns the combined directions of variable limits. null if there is no tagging or there is
  *  conflicting tagging. */
 private fun createForwardAndBackwardVariableLimit(tags: Map<String, String>): ForwardAndBackwardVariableLimit? {
-    val forward = isVariableLimit(tags, "forward")
-    val backward = isVariableLimit(tags, "backward")
-    val both = isVariableLimit(tags, null)
+    val forward = isVariableLimit(tags, FORWARD)
+    val backward = isVariableLimit(tags, BACKWARD)
+    val both = isVariableLimit(tags, BOTH)
 
     return when {
         both == null && forward == null && backward == null -> null
@@ -91,14 +89,13 @@ private fun createForwardAndBackwardVariableLimit(tags: Map<String, String>): Fo
 /** Returns if there is a variable limit in the given [direction]. null if there is no variable
  *  limit, or there is invalid tagging, false if there is explicitly no variable limit, true for any
  *  other value. */
-private fun isVariableLimit(tags: Map<String, String>, direction: String?): Boolean? {
-    val dir = if (direction != null) ":$direction" else ""
-    val maxspeedVariableTag = when (tags["maxspeed:variable$dir"]) {
+private fun isVariableLimit(tags: Map<String, String>, direction: Direction): Boolean? {
+    val maxspeedVariableTag = when (tags["maxspeed:variable$direction"]) {
         null -> null
         "no" -> false
         else -> true
     }
-    val maxspeedTag = when (tags["maxspeed$dir"]) {
+    val maxspeedTag = when (tags["maxspeed$direction"]) {
         null -> null
         "signals" -> true
         else -> null
@@ -125,9 +122,9 @@ private fun createVehicleConditionalMap(tags: Map<String, String>, countryInfo: 
  *  for each direction for the given [vehicleType]. Conditions applying to both directions are split
  *  into each direction. Any clashing values are replaced with Invalid. */
 private fun createForwardAndBackwardConditionalMaxspeed(tags: Map<String, String>, countryInfo: CountryInfo, vehicleType: String?): ForwardAndBackwardConditionalMaxspeed {
-    val forwardConditional = createConditionalMaxspeed(tags, "forward", vehicleType)
-    val backwardConditional = createConditionalMaxspeed(tags, "backward", vehicleType)
-    val bothConditional = createConditionalMaxspeed(tags, null, vehicleType)
+    val forwardConditional = createConditionalMaxspeed(tags, FORWARD, vehicleType)
+    val backwardConditional = createConditionalMaxspeed(tags, BACKWARD, vehicleType)
+    val bothConditional = createConditionalMaxspeed(tags, BOTH, vehicleType)
     val unconditional = createForwardAndBackwardMaxspeedAndType(tags, countryInfo, vehicleType)
 
     val unconditionalMapForward = if (unconditional?.forward != null) {
@@ -175,17 +172,16 @@ private fun createForwardAndBackwardConditionalMaxspeed(tags: Map<String, String
  *  The return type still needs to include type so we can merge with plain speed */
 /** Creates a map of conditions to MaxspeedAndType for the given [direction] and [vehicleType],
  *  including a map from NoCondition for the bare tags. */
-fun createConditionalMaxspeed(tags: Map<String, String>, direction: String?, vehicleType: String?): Map<Condition, MaxspeedAndType>? {
-    val dir = if (direction != null) ":$direction" else ""
+fun createConditionalMaxspeed(tags: Map<String, String>, direction: Direction, vehicleType: String?): Map<Condition, MaxspeedAndType>? {
     val veh = if (vehicleType != null) ":$vehicleType" else ""
-    val speedKey = "maxspeed$veh$dir:conditional"
+    val speedKey = "maxspeed$veh$direction:conditional"
     val fromMaxspeedConditional = getConditionalMaxspeed(tags[speedKey])?.mapValues { MaxspeedAndType(it.value, null) }
     val otherConditionals = mutableMapOf<Condition, MaxspeedAndType>()
 
     val otherConditionalTags = mapOf(
-        "maxspeed:night$veh$dir" to Night,
-        "maxspeed:seasonal:winter$veh$dir" to Winter, // TODO: remove if proposal is rejected
-        "maxspeed:wet$veh$dir" to Wet,
+        "maxspeed:night$veh$direction" to Night,
+        "maxspeed:seasonal:winter$veh$direction" to Winter, // TODO: remove if proposal is rejected
+        "maxspeed:wet$veh$direction" to Wet,
     )
     otherConditionalTags.forEach {
         if (tags[it.key] != null) {
@@ -228,11 +224,11 @@ private fun combineConditionalMaxspeedMaps(a: Map<Condition, MaxspeedAndType>?, 
 /** Creates a combined set of MaxspeedAndType for forwards and backwards. If there is any over-
  *  defined tagging (e.g. maxspeed= and maxspeed:forward= then Invalid speed and type are returned. */
 private fun createForwardAndBackwardMaxspeedAndType(tags: Map<String, String>, countryInfo: CountryInfo, vehicleType: String? = null): ForwardAndBackwardMaxspeedAndType? {
-    if ( !hasAnyMaxspeedTaggingForDirectionAndVehicle(tags, null, vehicleType) ) return null
+    if ( !hasAnyMaxspeedTaggingForDirectionAndVehicle(tags, BOTH, vehicleType) ) return null
 
-    val forward = createMaxspeedAndType(tags, countryInfo, "forward", vehicleType)
-    val backward = createMaxspeedAndType(tags, countryInfo, "backward", vehicleType)
-    val both = createMaxspeedAndType(tags, countryInfo, null, vehicleType)
+    val forward = createMaxspeedAndType(tags, countryInfo, FORWARD, vehicleType)
+    val backward = createMaxspeedAndType(tags, countryInfo, BACKWARD, vehicleType)
+    val both = createMaxspeedAndType(tags, countryInfo, BOTH, vehicleType)
 
     if (forward == null && backward == null && both == null) return null
 
@@ -260,22 +256,21 @@ private fun createForwardAndBackwardMaxspeedAndType(tags: Map<String, String>, c
 
 /** Returns explicit and implicit maxspeed. Returns null if there is no such tagging for the
  *  given [direction] and [vehicleType] */
-private fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: CountryInfo, direction: String? = null, vehicleType: String? = null): MaxspeedAndType? {
-    val dir = if (direction != null) ":$direction" else ""
+private fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: CountryInfo, direction: Direction = BOTH, vehicleType: String? = null): MaxspeedAndType? {
     val veh = if (vehicleType != null) ":$vehicleType" else ""
 
     if ( !hasAnyMaxspeedTaggingForDirectionAndVehicle(tags, direction, vehicleType) ) return null
 
-    val maxspeedTag = tags["maxspeed$veh$dir"]
+    val maxspeedTag = tags["maxspeed$veh$direction"]
 
     var maxspeedType: MaxSpeedAnswer?
     val impliedMaxspeedValue: MaxSpeedAnswer?
 
-    val taggedMaxspeedType = createImplicitMaxspeed(tags["maxspeed:type$veh$dir"], tags, countryInfo)
-    val taggedSourceMaxspeed = createImplicitMaxspeed(tags["source:maxspeed$veh$dir"], tags, countryInfo)
-    val taggedZoneMaxspeed = createImplicitMaxspeed(tags["zone:maxspeed$veh$dir"], tags, countryInfo) // e.g. "DE:30", "DE:urban" etc.
-    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic$veh$dir"], tags, countryInfo) // e.g. "DE:urban", "DE:zone30" etc.
-    val taggedMaxspeedSigned = tags["maxspeed$dir:signed"] != "no"
+    val taggedMaxspeedType = createImplicitMaxspeed(tags["maxspeed:type$veh$direction"], tags, countryInfo)
+    val taggedSourceMaxspeed = createImplicitMaxspeed(tags["source:maxspeed$veh$direction"], tags, countryInfo)
+    val taggedZoneMaxspeed = createImplicitMaxspeed(tags["zone:maxspeed$veh$direction"], tags, countryInfo) // e.g. "DE:30", "DE:urban" etc.
+    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic$veh$direction"], tags, countryInfo) // e.g. "DE:urban", "DE:zone30" etc.
+    val taggedMaxspeedSigned = tags["maxspeed$direction:signed"] != "no"
 
     // Assume that invalid "source:maxspeed" means that it is actual "source", not type
     val maxspeedTypesList = if (taggedSourceMaxspeed == Invalid) {
@@ -350,7 +345,7 @@ private fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: Countr
 private fun createWholeRoadType(tags: Map<String, String>, countryInfo: CountryInfo): MaxSpeedAnswer? {
     // Check for school zone first, because if there is a road that is both then if it was displayed
     // as a living street then there would be no way to change the tags to mark it as a school zone
-    val livingStreetAsType = createMaxspeedAndType(tags, countryInfo, null, null)
+    val livingStreetAsType = createMaxspeedAndType(tags, countryInfo, BOTH, null)
     val isLivingStreetAsType = livingStreetAsType?.type is LivingStreet
     return when {
         isSchoolZone(tags) -> IsSchoolZone
@@ -406,10 +401,9 @@ private fun hasAnyMaxspeedTagging(tags: Map<String, String>): Boolean {
     return containsAnyMaxspeed || containsAnyMaxspeedType
 }
 
-private fun hasAnyMaxspeedTaggingForDirectionAndVehicle(tags: Map<String, String>, direction: String?, vehicleType: String?): Boolean {
-    val dir = if (direction != null) ":$direction" else ""
+private fun hasAnyMaxspeedTaggingForDirectionAndVehicle(tags: Map<String, String>, direction: Direction, vehicleType: String?): Boolean {
     val veh = if (vehicleType != null) ":$vehicleType" else ""
-    val containsAnyMaxspeed = MAXSPEED_KEYS.any { m -> tags.filterKeys { it.startsWith("$m$veh$dir") }.isNotEmpty() }
-    val containsAnyMaxspeedType = MAXSPEED_TYPE_KEYS.any { m -> tags.filterKeys { it.startsWith("$m$veh$dir") }.isNotEmpty() }
+    val containsAnyMaxspeed = MAXSPEED_KEYS.any { m -> tags.filterKeys { it.startsWith("$m$veh$direction") }.isNotEmpty() }
+    val containsAnyMaxspeedType = MAXSPEED_TYPE_KEYS.any { m -> tags.filterKeys { it.startsWith("$m$veh$direction") }.isNotEmpty() }
     return containsAnyMaxspeed || containsAnyMaxspeedType
 }

@@ -5,9 +5,11 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryMo
 import de.westnordost.streetcomplete.osm.lit.LitStatus.*
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
+import de.westnordost.streetcomplete.osm.maxspeed.Kmh
 import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
+import de.westnordost.streetcomplete.osm.maxspeed.Mph
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
 import de.westnordost.streetcomplete.quests.verifyAnswer
 import org.junit.Test

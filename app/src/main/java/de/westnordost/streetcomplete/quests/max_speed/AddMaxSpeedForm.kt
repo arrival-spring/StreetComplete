@@ -24,12 +24,15 @@ import de.westnordost.streetcomplete.osm.lit.LitStatus
 import de.westnordost.streetcomplete.osm.lit.LitStatus.*
 import de.westnordost.streetcomplete.osm.maxspeed.AdvisorySpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.ImplicitMaxSpeed
+import de.westnordost.streetcomplete.osm.maxspeed.Kmh
 import de.westnordost.streetcomplete.osm.maxspeed.LivingStreet
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedAnswer
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedSign
 import de.westnordost.streetcomplete.osm.maxspeed.MaxSpeedZone
+import de.westnordost.streetcomplete.osm.maxspeed.Mph
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
+import de.westnordost.streetcomplete.osm.maxspeed.Speed
 import de.westnordost.streetcomplete.quests.AbstractOsmQuestForm
 import de.westnordost.streetcomplete.quests.AnswerItem
 import de.westnordost.streetcomplete.quests.max_speed.SpeedType.ADVISORY

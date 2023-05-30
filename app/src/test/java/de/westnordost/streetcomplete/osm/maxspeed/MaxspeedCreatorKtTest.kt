@@ -13,8 +13,6 @@ import de.westnordost.streetcomplete.osm.weight.ImperialPounds
 import de.westnordost.streetcomplete.osm.weight.Kilograms
 import de.westnordost.streetcomplete.osm.weight.MetricTons
 import de.westnordost.streetcomplete.osm.weight.ShortTons
-import de.westnordost.streetcomplete.quests.max_speed.Kmh
-import de.westnordost.streetcomplete.quests.max_speed.Mph
 import org.assertj.core.api.Assertions
 import org.junit.Test
 

@@ -7,8 +7,6 @@ import de.westnordost.streetcomplete.osm.lit.createLitStatus
 import de.westnordost.streetcomplete.osm.maxspeed.Inequality.*
 import de.westnordost.streetcomplete.osm.opening_hours.parser.toOpeningHoursRules
 import de.westnordost.streetcomplete.osm.weight.createWeight
-import de.westnordost.streetcomplete.quests.max_speed.Kmh
-import de.westnordost.streetcomplete.quests.max_speed.Mph
 
 val MAXSPEED_KEYS = setOf(
     "maxspeed",
@@ -63,6 +61,15 @@ val SOURCE_MAXSPEED_VALUES_THAT_CAN_BE_REMOVED = setOf(
     "https://data-atgis.opendata.arcgis.com/datasets/d43c489e7027489b88bcdedffc3be6c6_3/data",
     "CDOT", "Speed Limits Bylaw 2020", "http://www.txdot.gov/safety/speed_limit/75mph.htm"
 )
+
+enum class Direction(val osmValue: String) {
+    FORWARD(":forward"),
+    BACKWARD(":backward"),
+    BOTH("");
+    override fun toString(): String {
+        return osmValue
+    }
+}
 
 private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.*)")
 private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?([0-9]+)")

@@ -1,7 +1,6 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.osm.lit.LitStatus
-import de.westnordost.streetcomplete.quests.max_speed.Speed
 
 data class ForwardAndBackwardAllSpeedInformation(
     val forward: AllSpeedInformation?,
