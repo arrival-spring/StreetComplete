@@ -68,9 +68,10 @@ private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.*)")
 private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?([0-9]+)")
 private val livingStreetRegex = Regex("([A-Z-]+-?[A-Z]*):(?:living_street)?")
 private val mphRegex = Regex("([0-9]+) mph")
-// private val conditionalRegex = Regex("([0-9]+(?: mph)?) @ [(]?([^)]*)[)]?(?:; ([0-9]+) @ [(]?([^)]*)[)]?)*?")
-private val conditionalRegex = Regex("(?:(\\d+(?: mph)?) @ (\\((?:[^)]+)\\)|(?:[^;]+))(?:; )?)+?")
+private val conditionalRegex = Regex("(?:(\\d+(?: mph)?) ?@ ?(\\((?:[^)]+)\\)|(?:[^;]+))(?:; )?)+?")
 private val weightRegex = Regex("weight ?([<>]=?) ?(\\d+\\.?\\d* ?(?:t|st|lbs|kg)?)")
+private val flashingRegex = Regex("[\"']?(when[ _])?(lights?[ _])?flashing([ _]lights?)?[\"']?")
+private val childrenPresentRegex = Regex("[\"']?(when[ _]?)?children[ _](are[ _])?present[\"']?")
 
 fun isValidConditionalMaxspeed(value: String?): Boolean {
     return value?.let { conditionalRegex.matchEntire(it) } != null
@@ -98,6 +99,7 @@ private fun getCondition(condition: String?): Condition? {
         condition == "snow" -> Snow
         condition == "wet" -> Wet
         isFlashing(condition) -> Flashing
+        isChildrenPresent(condition) -> ChildrenPresent
         condition == "winter" -> Winter
         isNightCondition(condition) -> Night
         condition.startsWith("weight") -> getWeightAndComparison(condition)
@@ -107,20 +109,13 @@ private fun getCondition(condition: String?): Condition? {
 }
 
 private fun isFlashing(condition: String?): Boolean {
-    return when (condition) {
-        "flashing" -> true
-        "'flashing'" -> true
-        "when flashing" -> true
-        "when_flashing" -> true
-        "\"when flashing\"" -> true
-        "flashing light" -> true
-        "flashing_light" -> true
-        "flashing lights" -> true
-        "flashing_lights" -> true
-        "\"flashing\";␣PH␣off;␣SH␣off" -> true
-        "flashing;␣SH␣off" -> true
-        else -> false
-    }
+    if (condition == null) return false
+    return flashingRegex.matchEntire(condition.lowercase()) != null
+}
+
+private fun isChildrenPresent(condition: String?): Boolean {
+    if (condition == null) return false
+    return childrenPresentRegex.matchEntire(condition.lowercase()) != null
 }
 
 // dealing with this outside of opening hours parser because it will be displayed as a separate option

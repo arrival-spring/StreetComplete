@@ -1378,6 +1378,13 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoVehiclesBothDirections(
+                mapOf(Wet to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40@wet")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
                 mapOf(Snow to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
@@ -1440,13 +1447,6 @@ class MaxspeedParserKtTest {
                 mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
-            parse("maxspeed:conditional" to "40 @ (flashing)")
-        )
-        assertEquals(
-            maxspeedNoVehiclesBothDirections(
-                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
-                null, null, null
-            ),
             parse("maxspeed:conditional" to "40 @ flashing")
         )
         assertEquals(
@@ -1469,6 +1469,51 @@ class MaxspeedParserKtTest {
                 null, null, null
             ),
             parse("maxspeed:conditional" to "40 @ 'flashing'")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ When Lights Flashing")
+        )
+    }
+
+    @Test fun `parse children_present conditions`() {
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ children_present")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ children present")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ when_children_present")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ \"when children are present\"")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ Children Present")
         )
     }
 

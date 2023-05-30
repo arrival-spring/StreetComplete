@@ -1847,6 +1847,15 @@ class MaxspeedCreatorKtTest {
                 StringMapEntryAdd("maxspeed:conditional", "50 @ flashing")
             )
         )
+        verifyAnswer(
+            mapOf(),
+            maxspeedBothDirections(
+                mapOf(null to mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(50)), null)))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:conditional", "50 @ children_present")
+            )
+        )
     }
 
     @Test fun `apply conditional maxspeed for weight`() {

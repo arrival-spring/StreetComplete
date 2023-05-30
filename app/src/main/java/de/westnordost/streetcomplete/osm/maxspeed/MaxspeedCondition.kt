@@ -8,6 +8,7 @@ sealed interface Condition
 object Wet : Condition
 object Snow : Condition
 object Flashing : Condition
+object ChildrenPresent : Condition
 object Winter : Condition
 object Night : Condition
 data class WeightAndComparison(val weight: Weight, val comparison: Inequality) : Condition
@@ -19,6 +20,7 @@ fun Condition.toOsmValue(): String {
         Wet -> "wet"
         Snow -> "snow"
         Flashing -> "flashing"
+        ChildrenPresent -> "children_present"
         Winter -> "winter"
         Night -> "sunset-sunrise"
         is WeightAndComparison -> "weight${comparison.osmValue}$weight"
