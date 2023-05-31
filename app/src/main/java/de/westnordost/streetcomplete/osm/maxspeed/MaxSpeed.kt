@@ -11,7 +11,7 @@ data class ForwardAndBackwardAllSpeedInformation(
 data class AllSpeedInformation(
     val vehicles: Map<String?, Map<Condition, MaxspeedAndType?>?>?,
     val advisory: AdvisorySpeedSign?,
-    val variable: Boolean?,
+    val variable: Boolean?
     )
 
 data class ForwardAndBackwardAdvisorySpeedSign(val forward: AdvisorySpeedSign?, val backward: AdvisorySpeedSign?)

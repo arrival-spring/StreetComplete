@@ -179,7 +179,7 @@ fun createConditionalMaxspeed(tags: Map<String, String>, direction: Direction, v
     val otherConditionals = mutableMapOf<Condition, MaxspeedAndType>()
 
     CONDITIONAL_VALUE_TAG_SYNONYMS.forEach {
-        if (tags[it.key] != null) {
+        if (tags["${it.key}$veh$direction"] != null) {
             otherConditionals[it.value] = MaxspeedAndType(createExplicitMaxspeed(tags["${it.key}$veh$direction"]), null)
         }
     }
