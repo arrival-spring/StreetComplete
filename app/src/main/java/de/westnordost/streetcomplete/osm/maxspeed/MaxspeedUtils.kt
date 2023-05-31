@@ -4,7 +4,7 @@ import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.CountryInfos
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
 import de.westnordost.streetcomplete.osm.lit.createLitStatus
-import de.westnordost.streetcomplete.osm.maxspeed.Inequality.*
+import de.westnordost.streetcomplete.osm.maxspeed.Inequality.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.osm.opening_hours.parser.toOpeningHoursRules
 import de.westnordost.streetcomplete.osm.weight.createWeight
 
@@ -71,6 +71,13 @@ enum class Direction(val osmValue: String) {
         return osmValue
     }
 }
+
+val CONDITIONAL_VALUE_TAG_SYNONYMS = mapOf(
+    "maxspeed:night" to Night,
+    "maxspeed:seasonal:winter" to Winter, // TODO: remove if proposal is rejected
+    "maxspeed:wet" to Wet,
+    "maxspeed:children_present" to ChildrenPresent
+)
 
 // source:maxspeed sometimes has a suffix of vehicle type
 private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.+?)(:.+)?\$")

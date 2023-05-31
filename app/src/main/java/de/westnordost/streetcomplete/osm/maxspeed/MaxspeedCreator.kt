@@ -5,7 +5,7 @@ import de.westnordost.streetcomplete.osm.expandDirections
 import de.westnordost.streetcomplete.osm.hasCheckDateForKey
 import de.westnordost.streetcomplete.osm.lit.applyTo
 import de.westnordost.streetcomplete.osm.lit.createLitStatus
-import de.westnordost.streetcomplete.osm.maxspeed.Direction.*
+import de.westnordost.streetcomplete.osm.maxspeed.Direction.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.UNKNOWN
 import de.westnordost.streetcomplete.osm.mergeDirections
 import de.westnordost.streetcomplete.osm.updateCheckDateForKey

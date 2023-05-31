@@ -1,7 +1,7 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
-import de.westnordost.streetcomplete.osm.maxspeed.Direction.*
+import de.westnordost.streetcomplete.osm.maxspeed.Direction.* // ktlint-disable no-unused-imports
 import kotlin.math.roundToInt
 
 fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, countryInfo: CountryInfo): ForwardAndBackwardAllSpeedInformation? {
@@ -178,14 +178,9 @@ fun createConditionalMaxspeed(tags: Map<String, String>, direction: Direction, v
     val fromMaxspeedConditional = getConditionalMaxspeed(tags[speedKey])?.mapValues { MaxspeedAndType(it.value, null) }
     val otherConditionals = mutableMapOf<Condition, MaxspeedAndType>()
 
-    val otherConditionalTags = mapOf(
-        "maxspeed:night$veh$direction" to Night,
-        "maxspeed:seasonal:winter$veh$direction" to Winter, // TODO: remove if proposal is rejected
-        "maxspeed:wet$veh$direction" to Wet,
-    )
-    otherConditionalTags.forEach {
+    CONDITIONAL_VALUE_TAG_SYNONYMS.forEach {
         if (tags[it.key] != null) {
-            otherConditionals[it.value] = MaxspeedAndType(createExplicitMaxspeed(tags[it.key]), null)
+            otherConditionals[it.value] = MaxspeedAndType(createExplicitMaxspeed(tags["${it.key}$veh$direction"]), null)
         }
     }
 

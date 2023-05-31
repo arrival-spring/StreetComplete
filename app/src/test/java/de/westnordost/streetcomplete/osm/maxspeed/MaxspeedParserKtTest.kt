@@ -2,10 +2,10 @@ package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
-import de.westnordost.streetcomplete.osm.lit.LitStatus.*
-import de.westnordost.streetcomplete.osm.maxspeed.Inequality.*
-import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
-import de.westnordost.streetcomplete.osm.weight.*
+import de.westnordost.streetcomplete.osm.lit.LitStatus.* // ktlint-disable no-unused-imports
+import de.westnordost.streetcomplete.osm.maxspeed.Inequality.* // ktlint-disable no-unused-imports
+import de.westnordost.streetcomplete.osm.maxspeed.RoadType.* // ktlint-disable no-unused-imports
+import de.westnordost.streetcomplete.osm.weight.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.testutils.mock
 import de.westnordost.streetcomplete.testutils.on
 import org.junit.Assert.assertEquals
@@ -1567,6 +1567,13 @@ class MaxspeedParserKtTest {
                 null, null, null
             ),
             parse("maxspeed:wet" to "40")
+        )
+        assertEquals(
+            maxspeedNoVehiclesBothDirections(
+                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:children_present" to "40")
         )
     }
 
