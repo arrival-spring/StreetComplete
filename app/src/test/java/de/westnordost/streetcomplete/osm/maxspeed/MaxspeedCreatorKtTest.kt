@@ -6,8 +6,8 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryCh
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryDelete
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
 import de.westnordost.streetcomplete.osm.lit.LitStatus.*
-import de.westnordost.streetcomplete.osm.maxspeed.Inequality.*
-import de.westnordost.streetcomplete.osm.maxspeed.RoadType.*
+import de.westnordost.streetcomplete.osm.maxspeed.Inequality.* // ktlint-disable no-unused-imports
+import de.westnordost.streetcomplete.osm.maxspeed.RoadType.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.osm.nowAsCheckDateString
 import de.westnordost.streetcomplete.osm.weight.ImperialPounds
 import de.westnordost.streetcomplete.osm.weight.Kilograms
@@ -935,6 +935,8 @@ class MaxspeedCreatorKtTest {
         )
     }
 
+    /* ----------------------------------- maxspeed:practical ----------------------------------- */
+
     @Test fun `remove maxspeed_practical if it is more than the new maxspeed`() {
         verifyAnswer(
             mapOf("maxspeed:practical" to "100"),
@@ -970,6 +972,1126 @@ class MaxspeedCreatorKtTest {
                 StringMapEntryModify("maxspeed:practical", "50 mph", "50 mph"),
                 StringMapEntryAdd("maxspeed", "60 mph")
             )
+        )
+    }
+
+    /* ----------------------------------- maxspeed:practical:forward --------------------------- */
+
+    @Test fun `remove maxspeed_practical_forward if it is more than the new forward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:forward" to "70"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), null),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:practical:forward", "70"),
+                StringMapEntryAdd("maxspeed:forward", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_practical_forward if it is less than the new forward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:forward" to "100"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(120)), null),
+                null, null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:forward", "120"))
+        )
+    }
+
+    @Test fun `apply forward answer which is less than existing maxspeed_practical`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical" to "80"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:practical", "80"),
+                StringMapEntryAdd("maxspeed:forward", "50"),
+                StringMapEntryAdd("maxspeed:practical:backward", "80")
+            )
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing forward practical maxspeed that is lower than new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:forward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(60)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "60"))
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing forward practical maxspeed that is higher than new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:forward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(30)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "30"),
+                StringMapEntryDelete("maxspeed:practical:forward", "50")
+            )
+        )
+    }
+
+    /* ----------------------------------- maxspeed:practical:backward -------------------------- */
+
+    @Test fun `remove maxspeed_practical_backward if it is more than the new backward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:backward" to "70"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), null),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:practical:backward", "70"),
+                StringMapEntryAdd("maxspeed:backward", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_practical_backward if it is less than the new backward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:backward" to "100"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(120)), null),
+                null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:backward", "120"))
+        )
+    }
+
+    @Test fun `apply backward answer which is less than existing maxspeed_practical`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical" to "80"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:practical", "80"),
+                StringMapEntryAdd("maxspeed:backward", "50"),
+                StringMapEntryAdd("maxspeed:practical:forward", "80")
+            )
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing backward practical maxspeed that is lower than new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:backward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(60)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "60"))
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing backward practical maxspeed that is higher than new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:practical:backward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(30)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "30"),
+                StringMapEntryDelete("maxspeed:practical:backward", "50")
+            )
+        )
+    }
+
+    // No tests for vehicles as maxspeed:practical has not been used for vehicles.
+
+    /* ----------------------------------- minspeed --------------------------------------------- */
+
+    @Test fun `remove minspeed if it is more than the new maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed" to "70"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(60)), null),
+            arrayOf(
+                StringMapEntryDelete("minspeed", "70"),
+                StringMapEntryAdd("maxspeed", "60")
+            )
+        )
+        verifyAnswer(
+            mapOf("minspeed" to "50 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(30)), null),
+            arrayOf(
+                StringMapEntryDelete("minspeed", "50 mph"),
+                StringMapEntryAdd("maxspeed", "30 mph")
+            )
+        )
+    }
+
+    @Test fun `do not remove minspeed if it is less than the new maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed" to "100"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(120)), null),
+            arrayOf(
+                StringMapEntryModify("minspeed", "100", "100"),
+                StringMapEntryAdd("maxspeed", "120")
+            )
+        )
+        verifyAnswer(
+            mapOf("minspeed" to "50 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(60)), null),
+            arrayOf(
+                StringMapEntryModify("minspeed", "50 mph", "50 mph"),
+                StringMapEntryAdd("maxspeed", "60 mph")
+            )
+        )
+    }
+
+    /* ----------------------------------- minspeed:forward ------------------------------------- */
+
+    @Test fun `remove minspeed_forward if it is more than the new forward maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:forward" to "70"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), null),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed:forward", "70"),
+                StringMapEntryAdd("maxspeed:forward", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove minspeed_forward if it is less than the new forward maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:forward" to "100"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(120)), null),
+                null, null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:forward", "120"))
+        )
+    }
+
+    @Test fun `apply forward answer which is less than existing minspeed`() {
+        verifyAnswer(
+            mapOf("minspeed" to "80"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed", "80"),
+                StringMapEntryAdd("maxspeed:forward", "50"),
+                StringMapEntryAdd("minspeed:backward", "80")
+            )
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing forward minspeed that is lower than new maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:forward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(60)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "60"))
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing forward minspeed that is higher than new maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:forward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(30)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "30"),
+                StringMapEntryDelete("minspeed:forward", "50")
+            )
+        )
+    }
+
+    /* ----------------------------------- minspeed:backward ------------------------------------ */
+
+    @Test fun `remove minspeed_backward if it is more than the new backward maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:backward" to "70"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), null),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed:backward", "70"),
+                StringMapEntryAdd("maxspeed:backward", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove minspeed_backward if it is less than the new backward maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:backward" to "100"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(120)), null),
+                null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:backward", "120"))
+        )
+    }
+
+    @Test fun `apply backward answer which is less than existing minspeed`() {
+        verifyAnswer(
+            mapOf("minspeed" to "80"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed", "80"),
+                StringMapEntryAdd("maxspeed:backward", "50"),
+                StringMapEntryAdd("minspeed:forward", "80")
+            )
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing backward minspeed that is lower than new maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:backward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(60)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "60"))
+        )
+    }
+
+    @Test fun `apply single maxspeed to existing backward minspeed that is higher than new maxspeed`() {
+        verifyAnswer(
+            mapOf("minspeed:backward" to "50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(30)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "30"),
+                StringMapEntryDelete("minspeed:backward", "50")
+            )
+        )
+    }
+
+    /* ----------------------------------- minspeed for vehicle --------------------------------- */
+    @Test fun `remove minspeed for a vehicle if it is more than the new maxspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv" to "70"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null)))
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed:hgv", "70"),
+                StringMapEntryAdd("maxspeed:hgv", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove minspeed if it is for a different vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed" to "70"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null)))
+            ),
+            arrayOf(
+                StringMapEntryModify("minspeed", "70", "70"),
+                StringMapEntryAdd("maxspeed:hgv", "60")
+            )
+        )
+        verifyAnswer(
+            mapOf("minspeed:coach" to "70"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null)))
+            ),
+            arrayOf(
+                StringMapEntryModify("minspeed:coach", "70", "70"),
+                StringMapEntryAdd("maxspeed:hgv", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove minspeed for a vehicle if it is less than the new maxspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv" to "60"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(80)), null)))
+            ),
+            arrayOf(
+                StringMapEntryModify("minspeed:hgv", "60", "60"),
+                StringMapEntryAdd("maxspeed:hgv", "80")
+            )
+        )
+    }
+
+    @Test fun `remove minspeed_forward for a vehicle if it is more than the new forward maxspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv:forward" to "70"),
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null))),
+                    null, null
+                ),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed:hgv:forward", "70"),
+                StringMapEntryAdd("maxspeed:hgv:forward", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove minspeed_forward for a vehicle if it is less than the new forward maxspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv:forward" to "100"),
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(120)), null))),
+                    null, null
+                ),
+                null, null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv:forward", "120"))
+        )
+    }
+
+    @Test fun `apply forward answer for a vehicle which is less than existing minspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv" to "80"),
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(50)), null))),
+                    null, null
+                ),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed:hgv", "80"),
+                StringMapEntryAdd("maxspeed:hgv:forward", "50"),
+                StringMapEntryAdd("minspeed:hgv:backward", "80")
+            )
+        )
+    }
+
+    @Test fun `remove minspeed_backward for a vehicle if it is more than the new backward maxspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv:backward" to "70"),
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null))),
+                    null, null
+                ),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed:hgv:backward", "70"),
+                StringMapEntryAdd("maxspeed:hgv:backward", "60")
+            )
+        )
+    }
+
+    @Test fun `do not remove minspeed_backward for a vehicle if it is less than the new backward maxspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv:backward" to "100"),
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(120)), null))),
+                    null, null
+                ),
+                null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv:backward", "120"))
+        )
+    }
+
+    @Test fun `apply backward answer for a vehicle which is less than existing minspeed for that vehicle`() {
+        verifyAnswer(
+            mapOf("minspeed:hgv" to "80"),
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(50)), null))),
+                    null, null
+                ),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("minspeed:hgv", "80"),
+                StringMapEntryAdd("maxspeed:hgv:backward", "50"),
+                StringMapEntryAdd("minspeed:hgv:forward", "80")
+            )
+        )
+    }
+
+    /* ----------------------------------- maxspeed:lanes --------------------------------------- */
+
+    @Test fun `remove maxspeed_lanes if all lanes are specified and the highest speed is not equal to the new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "30|50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(40)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes", "30|50"),
+                StringMapEntryAdd("maxspeed", "40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "30 mph|50 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(40)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes", "30 mph|50 mph"),
+                StringMapEntryAdd("maxspeed", "40 mph")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "30|50"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(60)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes", "30|50"),
+                StringMapEntryAdd("maxspeed", "60")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "30 mph|50 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(60)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes", "30 mph|50 mph"),
+                StringMapEntryAdd("maxspeed", "60 mph")
+            )
+        )
+    }
+
+    @Test fun `remove maxspeed_lanes if not all lanes are specified and new maxspeed is less than a lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "|100|80"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(90)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes", "|100|80"),
+                StringMapEntryAdd("maxspeed", "90")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "|100 mph|80 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(90)), null),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes", "|100 mph|80 mph"),
+                StringMapEntryAdd("maxspeed", "90 mph")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_lanes if not all lanes are specified and new maxspeed is more than all lanes`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "|40|30"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(70)), null),
+            arrayOf(
+                StringMapEntryModify("maxspeed:lanes", "|40|30", "|40|30"),
+                StringMapEntryAdd("maxspeed", "70")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "|40 mph|30 mph"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(70)), null),
+            arrayOf(
+                StringMapEntryModify("maxspeed:lanes", "|40 mph|30 mph", "|40 mph|30 mph"),
+                StringMapEntryAdd("maxspeed", "70 mph")
+            )
+        )
+    }
+
+    /* ----------------------------------- maxspeed:lanes:forward ------------------------------- */
+
+    @Test fun `remove maxspeed_lanes_forward if all lanes are specified and the highest speed is not equal to the new forward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "30|50"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(40)), null),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes:forward", "30|50"),
+                StringMapEntryAdd("maxspeed:forward", "40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "30|50"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), null),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes:forward", "30|50"),
+                StringMapEntryAdd("maxspeed:forward", "60")
+            )
+        )
+    }
+
+    @Test fun `remove maxspeed_lanes_forward if not all lanes are specified and new forward maxspeed is less than a lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "|100|80"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(90)), null),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes:forward", "|100|80"),
+                StringMapEntryAdd("maxspeed:forward", "90")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_lanes_forward if not all lanes are specified and new forward maxspeed is more than all lanes`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "|40|30"),
+            bareMaxspeedAndType(
+                MaxspeedAndType(MaxSpeedSign(Kmh(70)), null),
+                null, null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:forward", "70"))
+        )
+    }
+
+    @Test fun `remove maxspeed_forward_lanes when adding maxspeed if new maxspeed does not match highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "30|40"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:lanes:forward", "30|40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "70|80"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:lanes:forward", "70|80")
+            )
+        )
+    }
+
+    @Test fun `remove maxspeed_forward_lanes when adding maxspeed if not all lanes are defined and new speed is lower than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "|80"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:lanes:forward", "|80")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_forward_lanes when adding maxspeed if new maxspeed matches highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "30|40"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(40)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "40"))
+        )
+    }
+
+    @Test fun `do not remove maxspeed_forward_lanes when adding maxspeed if not all lanes are defined and new speed is not higher than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:forward" to "|40"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "50"))
+        )
+    }
+
+    /* ----------------------------------- maxspeed:lanes:backward ------------------------------- */
+
+    @Test fun `remove maxspeed_lanes_backward if all lanes are specified and the highest speed is not equal to the new backward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "30|50"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(40)), null),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes:backward", "30|50"),
+                StringMapEntryAdd("maxspeed:backward", "40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "30|50"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), null),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes:backward", "30|50"),
+                StringMapEntryAdd("maxspeed:backward", "60")
+            )
+        )
+    }
+
+    @Test fun `remove maxspeed_lanes_backward if not all lanes are specified and new backward maxspeed is less than a lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "|100|80"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(90)), null),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:lanes:backward", "|100|80"),
+                StringMapEntryAdd("maxspeed:backward", "90")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_lanes_backward if not all lanes are specified and new backward maxspeed is more than all lanes`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "|40|30"),
+            bareMaxspeedAndType(
+                null,
+                MaxspeedAndType(MaxSpeedSign(Kmh(70)), null),
+                null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:backward", "70"))
+        )
+    }
+
+    @Test fun `remove maxspeed_backward_lanes when adding maxspeed if new maxspeed does not match highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "30|40"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:lanes:backward", "30|40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "70|80"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:lanes:backward", "70|80")
+            )
+        )
+    }
+
+    @Test fun `remove maxspeed_backward_lanes when adding maxspeed if not all lanes are defined and new speed is lower than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "|80"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(
+                StringMapEntryAdd("maxspeed", "50"),
+                StringMapEntryDelete("maxspeed:lanes:backward", "|80")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_backward_lanes when adding maxspeed if new maxspeed matches highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "30|40"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(40)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "40"))
+        )
+    }
+
+    @Test fun `do not remove maxspeed_backward_lanes when adding maxspeed if not all lanes are defined and new speed is not higher than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes:backward" to "|40"),
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            arrayOf(StringMapEntryAdd("maxspeed", "50"))
+        )
+    }
+
+    /* ----------------------------------- maxspeed:lanes with vehicles ------------------------- */
+
+    @Test fun `For a vehicle - remove maxspeed_lanes if all lanes are specified and the highest speed is not equal to the new maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "30|50"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(40)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes", "30|50"),
+                StringMapEntryAdd("maxspeed:hgv", "40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "30 mph|50 mph"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Mph(40)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes", "30 mph|50 mph"),
+                StringMapEntryAdd("maxspeed:hgv", "40 mph")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "30|50"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(60)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes", "30|50"),
+                StringMapEntryAdd("maxspeed:hgv", "60")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "30 mph|50 mph"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Mph(60)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes", "30 mph|50 mph"),
+                StringMapEntryAdd("maxspeed:hgv", "60 mph")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - remove maxspeed_lanes if not all lanes are specified and new maxspeed is less than a lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "|100|80"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(90)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes", "|100|80"),
+                StringMapEntryAdd("maxspeed:hgv", "90")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "|100 mph|80 mph"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Mph(90)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes", "|100 mph|80 mph"),
+                StringMapEntryAdd("maxspeed:hgv", "90 mph")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - do not remove maxspeed_lanes if not all lanes are specified and new maxspeed is more than all lanes`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "|40|30"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(70)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:hgv:lanes", "|40|30", "|40|30"),
+                StringMapEntryAdd("maxspeed:hgv", "70")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes" to "|40 mph|30 mph"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Mph(70)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:hgv:lanes", "|40 mph|30 mph", "|40 mph|30 mph"),
+                StringMapEntryAdd("maxspeed:hgv", "70 mph")
+            )
+        )
+    }
+
+    @Test fun `do not remove maxspeed_lanes if it is for a different vehicle`() {
+        verifyAnswer(
+            mapOf("maxspeed:lanes" to "70"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null)))
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:lanes", "70", "70"),
+                StringMapEntryAdd("maxspeed:hgv", "60")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:coach:lanes" to "70"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(60)), null)))
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:coach:lanes", "70", "70"),
+                StringMapEntryAdd("maxspeed:hgv", "60")
+            )
+        )
+    }
+
+    /* ----------------------------------- maxspeed:lanes:forward with vehicles ----------------- */
+
+    @Test fun `For a vehicle - remove maxspeed_lanes_forward if all lanes are specified and the highest speed is not equal to the new forward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "30|50"),
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null))
+                    ), null, null
+                ),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes:forward", "30|50"),
+                StringMapEntryAdd("maxspeed:hgv:forward", "40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "30|50"),
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(60)), null))
+                    ), null, null
+                ),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes:forward", "30|50"),
+                StringMapEntryAdd("maxspeed:hgv:forward", "60")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - remove maxspeed_lanes_forward if not all lanes are specified and new forward maxspeed is less than a lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "|100|80"),
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(90)), null))
+                    ), null, null
+                ),
+                null, null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes:forward", "|100|80"),
+                StringMapEntryAdd("maxspeed:hgv:forward", "90")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - do not remove maxspeed_lanes_forward if not all lanes are specified and new forward maxspeed is more than all lanes`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "|40|30"),
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(70)), null))
+                    ), null, null
+                ),
+                null, null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv:forward", "70"))
+        )
+    }
+
+    @Test fun `For a vehicle - remove maxspeed_forward_lanes when adding maxspeed if new maxspeed does not match highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "30|40"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:hgv", "50"),
+                StringMapEntryDelete("maxspeed:hgv:lanes:forward", "30|40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "70|80"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:hgv", "50"),
+                StringMapEntryDelete("maxspeed:hgv:lanes:forward", "70|80")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - remove maxspeed_forward_lanes when adding maxspeed if not all lanes are defined and new speed is lower than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "|80"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:hgv", "50"),
+                StringMapEntryDelete("maxspeed:hgv:lanes:forward", "|80")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - do not remove maxspeed_forward_lanes when adding maxspeed if new maxspeed matches highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "30|40"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(40)), null),
+                ))
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv", "40"))
+        )
+    }
+
+    @Test fun `For a vehicle - do not remove maxspeed_forward_lanes when adding maxspeed if not all lanes are defined and new speed is not higher than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:forward" to "|40"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv", "50"))
+        )
+    }
+
+    /* ----------------------------------- maxspeed:lanes:backward with vehicles ---------------- */
+
+    @Test fun `For a vehicle - remove maxspeed_lanes_backward if all lanes are specified and the highest speed is not equal to the new backward maxspeed`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "30|50"),
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null))
+                    ), null, null
+                ),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes:backward", "30|50"),
+                StringMapEntryAdd("maxspeed:hgv:backward", "40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "30|50"),
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(60)), null))
+                    ), null, null
+                ),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes:backward", "30|50"),
+                StringMapEntryAdd("maxspeed:hgv:backward", "60")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - remove maxspeed_lanes_backward if not all lanes are specified and new backward maxspeed is less than a lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "|100|80"),
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(90)), null))
+                    ), null, null
+                ),
+                null
+            ),
+            arrayOf(
+                StringMapEntryDelete("maxspeed:hgv:lanes:backward", "|100|80"),
+                StringMapEntryAdd("maxspeed:hgv:backward", "90")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - do not remove maxspeed_lanes_backward if not all lanes are specified and new backward maxspeed is more than all lanes`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "|40|30"),
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf("hgv" to mapOf(NoCondition to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(70)), null))
+                    ), null, null
+                ),
+                null
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv:backward", "70"))
+        )
+    }
+
+    @Test fun `For a vehicle - remove maxspeed_backward_lanes when adding maxspeed if new maxspeed does not match highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "30|40"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:hgv", "50"),
+                StringMapEntryDelete("maxspeed:hgv:lanes:backward", "30|40")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "70|80"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:hgv", "50"),
+                StringMapEntryDelete("maxspeed:hgv:lanes:backward", "70|80")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - remove maxspeed_backward_lanes when adding maxspeed if not all lanes are defined and new speed is lower than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "|80"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(
+                StringMapEntryAdd("maxspeed:hgv", "50"),
+                StringMapEntryDelete("maxspeed:hgv:lanes:backward", "|80")
+            )
+        )
+    }
+
+    @Test fun `For a vehicle - do not remove maxspeed_backward_lanes when adding maxspeed if new maxspeed matches highest lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "30|40"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(40)), null),
+                ))
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv", "40"))
+        )
+    }
+
+    @Test fun `For a vehicle - do not remove maxspeed_backward_lanes when adding maxspeed if not all lanes are defined and new speed is not higher than any lane`() {
+        verifyAnswer(
+            mapOf("maxspeed:hgv:lanes:backward" to "|40"),
+            maxspeedBothDirections(
+                mapOf("hgv" to mapOf(NoCondition to
+                    MaxspeedAndType(MaxSpeedSign(Kmh(50)), null),
+                ))
+            ),
+            arrayOf(StringMapEntryAdd("maxspeed:hgv", "50"))
         )
     }
 

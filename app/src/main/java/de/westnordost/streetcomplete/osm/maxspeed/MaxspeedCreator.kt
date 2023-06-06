@@ -172,130 +172,6 @@ private fun Map<Condition, MaxspeedAndType?>.applyTo(tags: Tags, direction: Dire
     CONDITIONAL_MAXSPEED_TAGS.forEach { tags.remove("$it$veh$direction") }
 }
 
-private fun Tags.expandAllMaxspeedTags() {
-    (setOf(null) + VEHICLE_TYPES).forEach { this.expandMaxspeedTags(it) }
-}
-
-private fun Tags.expandMaxspeedTags(vehicleType: String?) {
-    val veh = if (vehicleType != null) ":$vehicleType" else ""
-    MAXSPEED_KEYS.forEach {
-        this.expandDirections("$it$veh", null)
-        this.expandDirections("$it$veh", "conditional")
-        this.expandDirections("$it$veh", "signed")
-    }
-    this.expandDirections("maxspeed:variable$veh:max", null)
-    MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach {
-        this.expandDirections("$it$veh", null)
-        this.expandDirections("$it$veh", "conditional")
-    }
-    // Do not split source:maxspeed* if it is some special value that we will not touch
-    if (canThisSourceMaxspeedBeRemoved(this["source:maxspeed$veh"])) {
-        this.expandDirections("source:maxspeed$veh", null)
-        this.expandDirections("source:maxspeed$veh", "conditional")
-    }
-    CONDITIONAL_MAXSPEED_TAGS.forEach {
-        this.expandDirections("$it$veh", null)
-    }
-}
-
-private fun Tags.mergeAllMaxspeedTags() {
-    (setOf(null) + VEHICLE_TYPES).forEach { this.mergeMaxspeedTags(it) }
-}
-
-private fun Tags.mergeMaxspeedTags(vehicleType: String?) {
-    val veh = if (vehicleType != null) ":$vehicleType" else ""
-    MAXSPEED_KEYS.forEach {
-        this.mergeDirections("$it$veh", null)
-        this.mergeDirections("$it$veh", "conditional")
-        this.mergeDirections("$it$veh", "signed")
-    }
-    this.mergeDirections("maxspeed:variable$veh:max", null)
-    // Only merge type tags if directions have been merged
-    // i.e. maxspeed:forward=xx maxspeed:backward=yy should be combined with
-    // maxspeed:type:forward=sign and maxspeed:type:backward=sign, not just maxspeed:type=sign
-    MAXSPEED_TYPE_KEYS.forEach {
-        if (!directionsExistAndDiffer(this, veh)) {
-            this.mergeDirections("$it$veh", null)
-        }
-        if (!directionsExistAndDiffer(this, "$veh:advisory")) {
-            this.mergeDirections("$it$veh:advisory", null)
-        }
-        if (!directionsExistAndDiffer(this, "$veh:conditional")) {
-            this.mergeDirections("$it$veh", "conditional")
-        }
-    }
-    CONDITIONAL_MAXSPEED_TAGS.forEach {
-        this.mergeDirections("$it$veh", null)
-    }
-}
-
-private fun directionsExistAndDiffer(tags: Tags, veh: String): Boolean {
-    return tags["maxspeed$veh:forward"] != null
-        && tags["maxspeed$veh:backward"] != null
-        && tags["maxspeed$veh:forward"] != tags["maxspeed$veh:backward"]
-}
-
-/** Return a single type key that was used before for the given [postfix] to "maxspeed"
- *  In the case of multiple values existing, take the first one in the order of preference of
- *  type:maxspeed, source:maxspeed, zone:maxspeed and zone:traffic
- *  Will only be source:maxspeed if it was used for type before (not a special value or source value)
- *  null if no such key exists */
-private fun getPreviousTypeKey(tags: Tags, postfix: String, explicitValueGiven: Boolean, isSignedZone: Boolean): String? {
-    val speedKey = "maxspeed$postfix"
-    val maxspeedTypeKey = "maxspeed:type$postfix"
-    val sourceMaxspeedKey = "source:maxspeed$postfix"
-    val zoneMaxspeedKey = "zone:maxspeed$postfix"
-    val zoneTrafficKey = "zone:traffic$postfix"
-
-    return when {
-        // Use "maxspeed" for type if it was used before and there is no numerical speed limit to tag
-        isValidMaxspeedType(tags[speedKey]) && !explicitValueGiven -> speedKey
-        // the only way we should have a signed zone is if was like that before
-        isSignedZone ->  speedKey
-        tags.containsKey(maxspeedTypeKey) -> maxspeedTypeKey
-        // Only take "source:maxspeed" if it is a valid type (not actually being used as "source")
-        tags.containsKey(sourceMaxspeedKey) && isValidMaxspeedType(tags[sourceMaxspeedKey]) -> sourceMaxspeedKey
-        tags.containsKey(zoneMaxspeedKey) -> zoneMaxspeedKey
-        tags.containsKey(zoneTrafficKey) -> zoneTrafficKey
-        else -> null
-    }
-}
-
-/** Return a key to be used for the type. This is maxspeed:type if nothing was set before or the
- *  same as [previousTypeKey] unless that is not suitable for the new type.
- *  If there were different tags used for different vehicles/directions then always return
- *  the same value for all vehicles and directions, in the order of preference of type:maxspeed,
- *  source:maxspeed, zone:traffic, zone:maxspeed. */
-private fun getTypeKey(tags: Tags, previousTypeKey: String?, post: String): String {
-    val speedKey = "maxspeed$post"
-    val maxspeedTypeKey = "maxspeed:type$post"
-    val sourceMaxspeedKey = "source:maxspeed$post"
-    val zoneMaxspeedKey = "zone:maxspeed$post"
-    val zoneTrafficKey = "zone:traffic$post"
-
-    val containsMaxspeedType = tags.filterKeys { it.startsWith("maxspeed:type") }.isNotEmpty()
-    val containsSourceMaxspeed = tags.filterKeys { it.startsWith("source:maxspeed") }.isNotEmpty()
-    val containsZoneMaxspeed = tags.filterKeys { it.startsWith("zone:maxspeed") }.isNotEmpty()
-    val containsZoneTraffic = tags.filterKeys { it.startsWith("zone:traffic") }.isNotEmpty()
-
-    return when {
-        previousTypeKey == speedKey -> speedKey
-        containsMaxspeedType -> maxspeedTypeKey
-        containsSourceMaxspeed && canUseSourceMaxspeedForType(tags) -> sourceMaxspeedKey
-        anyTypeIsSigned -> maxspeedTypeKey // "sign" is only valid in "maxspeed:type" and "source:maxspeed"
-        containsZoneMaxspeed -> zoneMaxspeedKey
-        containsZoneTraffic -> zoneTrafficKey
-        else -> maxspeedTypeKey
-    }
-}
-
-private fun canUseSourceMaxspeedForType(tags: Tags): Boolean {
-    val sourceMaxspeedTags = tags.filterKeys { it.startsWith("source:maxspeed") }
-    val anyIsValid = sourceMaxspeedTags.any { isValidMaxspeedType(it.value) }
-    val allCanBeRemoved = sourceMaxspeedTags.all { canThisSourceMaxspeedBeRemoved(it.value) }
-    return anyIsValid && allCanBeRemoved
-}
-
 private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, vehicleType: String? = null) {
     if (this == null || ( this.type == null && this.explicit == null )) {
         tags.removeMaxspeedTagging(direction, vehicleType, null)
@@ -387,19 +263,160 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
     /* ---------------------------------- explicit maxspeed ------------------------------------- */
 
     // if maxspeed has changed remove all old maxspeed tagging but not type tagging
-    // if it's a signed maxspeed zone then don't remove the (just tagged) "maxspeed=XX:zoneyy"
+    // if it's a signed maxspeed zone then don't remove the (just tagged) "maxspeed=XX:zoneYY"
     if (speedOsmValue != null && speedOsmValue != previousSpeedOsmValue && !isSignedZone) {
         tags.removeMaxspeedTagging(direction, vehicleType, null)
         tags[speedKey] = speedOsmValue
-        val practicalMaxspeed = createExplicitMaxspeed(tags["maxspeed:practical$postfix"])
-        if (
-            practicalMaxspeed is MaxSpeedSign
-            && this.explicit is MaxSpeedSign
-            && practicalMaxspeed.value.toKmh() > this.explicit.value.toKmh()
-        ) {
-            tags.remove("maxspeed:practical$postfix")
+
+        // Some things we do not tag but should be removed if the new speed is lower than them
+        tags.removeSpeedIfMoreThan("maxspeed:practical$postfix", this.explicit)
+        tags.removeSpeedIfMoreThan("minspeed$postfix", this.explicit)
+        tags.removeSpeedIfMoreThan("maxspeed$veh:lanes$direction", this.explicit, true)
+    }
+}
+
+private fun Tags.removeSpeedIfMoreThan(removableTag: String, comparedTo: MaxSpeedAnswer?, removableTagIsLanes: Boolean = false) {
+    if (this[removableTag] == null) return
+    val removableTagMaxspeed = if (removableTagIsLanes) {
+        getHighestLaneSpeed(this[removableTag]!!)
+    } else {
+        createExplicitMaxspeed(this[removableTag])
+    }
+    when {
+        removableTagMaxspeed !is MaxSpeedSign -> return
+        comparedTo !is MaxSpeedSign -> return
+        removableTagMaxspeed.value.toKmh() > comparedTo.value.toKmh() -> this.remove(removableTag)
+        removableTagIsLanes
+            && !anyLanesSpeedIsEmpty(this[removableTag]!!)
+            && removableTagMaxspeed.value.toKmh() != comparedTo.value.toKmh() -> this.remove(removableTag)
+    }
+    return
+}
+
+private fun Tags.expandAllMaxspeedTags() {
+    (setOf(null) + VEHICLE_TYPES).forEach { this.expandMaxspeedTags(it) }
+}
+
+private fun Tags.expandMaxspeedTags(vehicleType: String?) {
+    val veh = if (vehicleType != null) ":$vehicleType" else ""
+    MAXSPEED_KEYS.forEach {
+        this.expandDirections("$it$veh", null)
+        this.expandDirections("$it$veh", "conditional")
+        this.expandDirections("$it$veh:lanes")
+        this.expandDirections("$it$veh", "signed")
+    }
+    this.expandDirections("maxspeed:variable$veh:max", null)
+    MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE.forEach {
+        this.expandDirections("$it$veh", null)
+        this.expandDirections("$it$veh", "conditional")
+    }
+    // Do not split source:maxspeed* if it is some special value that we will not touch
+    if (canThisSourceMaxspeedBeRemoved(this["source:maxspeed$veh"])) {
+        this.expandDirections("source:maxspeed$veh", null)
+        this.expandDirections("source:maxspeed$veh", "conditional")
+    }
+    CONDITIONAL_MAXSPEED_TAGS.forEach {
+        this.expandDirections("$it$veh", null)
+    }
+}
+
+private fun Tags.mergeAllMaxspeedTags() {
+    (setOf(null) + VEHICLE_TYPES).forEach { this.mergeMaxspeedTags(it) }
+}
+
+private fun Tags.mergeMaxspeedTags(vehicleType: String?) {
+    val veh = if (vehicleType != null) ":$vehicleType" else ""
+    MAXSPEED_KEYS.forEach {
+        this.mergeDirections("$it$veh", null)
+        this.mergeDirections("$it$veh", "conditional")
+        this.mergeDirections("$it$veh:lanes")
+        this.mergeDirections("$it$veh", "signed")
+    }
+    this.mergeDirections("maxspeed:variable$veh:max", null)
+    // Only merge type tags if directions have been merged
+    // i.e. maxspeed:forward=xx maxspeed:backward=yy should be combined with
+    // maxspeed:type:forward=sign and maxspeed:type:backward=sign, not just maxspeed:type=sign
+    MAXSPEED_TYPE_KEYS.forEach {
+        if (!directionsExistAndDiffer(this, veh)) {
+            this.mergeDirections("$it$veh", null)
+        }
+        if (!directionsExistAndDiffer(this, "$veh:advisory")) {
+            this.mergeDirections("$it$veh:advisory", null)
+        }
+        if (!directionsExistAndDiffer(this, "$veh:conditional")) {
+            this.mergeDirections("$it$veh", "conditional")
         }
     }
+    CONDITIONAL_MAXSPEED_TAGS.forEach {
+        this.mergeDirections("$it$veh", null)
+    }
+}
+
+private fun directionsExistAndDiffer(tags: Tags, veh: String): Boolean {
+    return tags["maxspeed$veh:forward"] != null
+        && tags["maxspeed$veh:backward"] != null
+        && tags["maxspeed$veh:forward"] != tags["maxspeed$veh:backward"]
+}
+
+/** Return a single type key that was used before for the given [postfix] to "maxspeed"
+ *  In the case of multiple values existing, take the first one in the order of preference of
+ *  type:maxspeed, source:maxspeed, zone:maxspeed and zone:traffic
+ *  Will only be source:maxspeed if it was used for type before (not a special value or source value)
+ *  null if no such key exists */
+private fun getPreviousTypeKey(tags: Tags, postfix: String, explicitValueGiven: Boolean, isSignedZone: Boolean): String? {
+    val speedKey = "maxspeed$postfix"
+    val maxspeedTypeKey = "maxspeed:type$postfix"
+    val sourceMaxspeedKey = "source:maxspeed$postfix"
+    val zoneMaxspeedKey = "zone:maxspeed$postfix"
+    val zoneTrafficKey = "zone:traffic$postfix"
+
+    return when {
+        // Use "maxspeed" for type if it was used before and there is no numerical speed limit to tag
+        isValidMaxspeedType(tags[speedKey]) && !explicitValueGiven -> speedKey
+        // the only way we should have a signed zone is if was like that before
+        isSignedZone ->  speedKey
+        tags.containsKey(maxspeedTypeKey) -> maxspeedTypeKey
+        // Only take "source:maxspeed" if it is a valid type (not actually being used as "source")
+        tags.containsKey(sourceMaxspeedKey) && isValidMaxspeedType(tags[sourceMaxspeedKey]) -> sourceMaxspeedKey
+        tags.containsKey(zoneMaxspeedKey) -> zoneMaxspeedKey
+        tags.containsKey(zoneTrafficKey) -> zoneTrafficKey
+        else -> null
+    }
+}
+
+/** Return a key to be used for the type. This is maxspeed:type if nothing was set before or the
+ *  same as [previousTypeKey] unless that is not suitable for the new type.
+ *  If there were different tags used for different vehicles/directions then always return
+ *  the same value for all vehicles and directions, in the order of preference of type:maxspeed,
+ *  source:maxspeed, zone:traffic, zone:maxspeed. */
+private fun getTypeKey(tags: Tags, previousTypeKey: String?, post: String): String {
+    val speedKey = "maxspeed$post"
+    val maxspeedTypeKey = "maxspeed:type$post"
+    val sourceMaxspeedKey = "source:maxspeed$post"
+    val zoneMaxspeedKey = "zone:maxspeed$post"
+    val zoneTrafficKey = "zone:traffic$post"
+
+    val containsMaxspeedType = tags.filterKeys { it.startsWith("maxspeed:type") }.isNotEmpty()
+    val containsSourceMaxspeed = tags.filterKeys { it.startsWith("source:maxspeed") }.isNotEmpty()
+    val containsZoneMaxspeed = tags.filterKeys { it.startsWith("zone:maxspeed") }.isNotEmpty()
+    val containsZoneTraffic = tags.filterKeys { it.startsWith("zone:traffic") }.isNotEmpty()
+
+    return when {
+        previousTypeKey == speedKey -> speedKey
+        containsMaxspeedType -> maxspeedTypeKey
+        containsSourceMaxspeed && canUseSourceMaxspeedForType(tags) -> sourceMaxspeedKey
+        anyTypeIsSigned -> maxspeedTypeKey // "sign" is only valid in "maxspeed:type" and "source:maxspeed"
+        containsZoneMaxspeed -> zoneMaxspeedKey
+        containsZoneTraffic -> zoneTrafficKey
+        else -> maxspeedTypeKey
+    }
+}
+
+private fun canUseSourceMaxspeedForType(tags: Tags): Boolean {
+    val sourceMaxspeedTags = tags.filterKeys { it.startsWith("source:maxspeed") }
+    val anyIsValid = sourceMaxspeedTags.any { isValidMaxspeedType(it.value) }
+    val allCanBeRemoved = sourceMaxspeedTags.all { canThisSourceMaxspeedBeRemoved(it.value) }
+    return anyIsValid && allCanBeRemoved
 }
 
 private fun canThisSourceMaxspeedBeRemoved(value: String?): Boolean {

@@ -13,7 +13,8 @@ val MAXSPEED_KEYS = setOf(
     "maxspeed:advisory",
     "maxspeed:advised",
     "maxspeed:practical",
-    "maxspeed:variable"
+    "maxspeed:variable",
+    "minspeed"
 )
 
 val MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE = setOf(
@@ -88,6 +89,30 @@ private val conditionalRegex = Regex("(?:(\\d+(?: mph)?) ?@ ?(\\((?:[^)]+)\\)|(?
 private val weightRegex = Regex("weight ?([<>]=?) ?(\\d+\\.?\\d* ?(?:t|st|lbs|kg)?)")
 private val flashingRegex = Regex("[\"']?(when[ _])?(lights?[ _])?flashing([ _]lights?)?[\"']?")
 private val childrenPresentRegex = Regex("[\"']?(when[ _]?)?children[ _](are[ _])?present[\"']?")
+
+fun anyLanesSpeedIsEmpty(value: String): Boolean {
+    return value.split("|").contains("")
+}
+
+fun getHighestLaneSpeed(value: String): MaxSpeedSign {
+    val highestSpeedValue = getHighestLaneSpeedValue(value)
+    return when {
+        value.endsWith(" mph") -> MaxSpeedSign(Mph(highestSpeedValue))
+        else ->                         MaxSpeedSign(Kmh(highestSpeedValue))
+    }
+}
+
+fun anyLaneIsInvalid(value: String): Boolean {
+    val laneSpeeds = value.split("|").map { v -> v.removeSuffix(" mph").toIntOrNull() }
+    return laneSpeeds.contains(null)
+}
+
+/** Returns the highest value of speed in any lane, regardless of mph or kmh.
+ *  Any empty lanes are ignored. */
+fun getHighestLaneSpeedValue(value: String): Int {
+    val laneSpeeds = value.split("|").map { v -> v.removeSuffix(" mph").toIntOrNull() }
+    return laneSpeeds.filterNotNull().max()
+}
 
 fun isValidConditionalMaxspeed(value: String?): Boolean {
     return value?.let { conditionalRegex.matchEntire(it) } != null

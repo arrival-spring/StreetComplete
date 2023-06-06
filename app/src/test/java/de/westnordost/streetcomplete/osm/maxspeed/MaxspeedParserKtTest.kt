@@ -887,6 +887,321 @@ class MaxspeedParserKtTest {
         )
     }
 
+    /* ------------------------------------------ lanes ----------------------------------------- */
+
+    @Test fun `maxspeed not equal to maximum value in lanes is invalid`() {
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, null, null),
+            parse(
+                "maxspeed" to "30",
+                "maxspeed:lanes" to "20|40"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, null, null),
+            parse(
+                "maxspeed" to "120",
+                "maxspeed:lanes" to "80|90"
+            )
+        )
+    }
+
+    @Test fun `maxspeed not equal to maximum value in lanes is invalid, in mph`() {
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, null, null),
+            parse(
+                "maxspeed" to "30 mph",
+                "maxspeed:lanes" to "20 mph|40 mph"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, null, null),
+            parse(
+                "maxspeed" to "120 mph",
+                "maxspeed:lanes" to "80 mph|90 mph"
+            )
+        )
+    }
+
+    @Test fun `lanes maxspeed with empty lane and maxspeed lower than a lane`() {
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, null, null),
+            parse(
+                "maxspeed" to "30",
+                "maxspeed:lanes" to "|40"
+            )
+        )
+    }
+
+    @Test fun `lanes maxspeed with empty lane and maxspeed lower than a lane, in mph`() {
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, null, null),
+            parse(
+                "maxspeed" to "30 mph",
+                "maxspeed:lanes" to "|40 mph"
+            )
+        )
+    }
+
+    @Test fun `lanes maxspeed with empty lane and maxspeed higher than any lane`() {
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            parse(
+                "maxspeed" to "50",
+                "maxspeed:lanes" to "|40"
+            )
+        )
+    }
+
+    @Test fun `lanes maxspeed with empty lane and maxspeed higher than any lane, in mph`() {
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(50)), null, null),
+            parse(
+                "maxspeed" to "50 mph",
+                "maxspeed:lanes" to "|40 mph"
+            )
+        )
+    }
+
+    @Test fun `lanes maxspeed tagged but no maxspeed set, take maximum from lanes`() {
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(40)), null, null),
+            parse("maxspeed:lanes" to "20|40")
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Mph(40)), null, null),
+            parse("maxspeed:lanes" to "20 mph|40 mph")
+        )
+    }
+
+    /* ------------------------------------------ lanes:forward --------------------------------- */
+
+    @Test fun `maxspeed_forward not equal to maximum value in lanes_forward is invalid`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(Invalid, null))),
+                    null, null
+                ),
+                null, null
+            ),
+            parse(
+                "maxspeed:forward" to "30",
+                "maxspeed:lanes:forward" to "20|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed not equal to maximum value in lanes_forward is invalid`() {
+        assertEquals(
+            maxspeedNoConditionsOrVehicles(
+                MaxspeedAndType(Invalid, Invalid),
+                MaxspeedAndType(Invalid, Invalid),
+                null
+            ),
+            parse(
+                "maxspeed" to "30",
+                "maxspeed:lanes:forward" to "20|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_forward with empty lane and maxspeed_forward lower than a lane`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(Invalid, null))),
+                    null, null
+                ),
+                null, null
+            ),
+            parse(
+                "maxspeed:forward" to "30",
+                "maxspeed:lanes:forward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_forward with empty lane and maxspeed lower than a lane`() {
+        assertEquals(
+            maxspeedNoConditionsOrVehicles(
+                MaxspeedAndType(Invalid, null),
+                MaxspeedAndType(MaxSpeedSign(Kmh(30)), null),
+                null
+            ),
+            parse(
+                "maxspeed" to "30",
+                "maxspeed:lanes:forward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_forward with empty lane and maxspeed_forward higher than any lane`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(50)), null))),
+                    null, null
+                ),
+                null, null
+            ),
+            parse(
+                "maxspeed:forward" to "50",
+                "maxspeed:lanes:forward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_forward with empty lane and maxspeed higher than any lane is valid`() {
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            parse(
+                "maxspeed" to "50",
+                "maxspeed:lanes:forward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `over-defined maxspeed is invalid, even with lanes forward`() {
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, Invalid, null),
+            parse(
+                "maxspeed" to "50",
+                "maxspeed:forward" to "60",
+                "maxspeed:lanes:forward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `forward - lanes maxspeed tagged but no maxspeed set, take maximum from lanes`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null))),
+                    null, null
+                ),
+                null, null
+            ),
+            parse("maxspeed:lanes:forward" to "20|40")
+        )
+    }
+
+    /* ------------------------------------------ lanes:backward --------------------------------- */
+
+    @Test fun `maxspeed_backward not equal to maximum value in lanes_backward is invalid`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(Invalid, null))),
+                    null, null
+                ),
+                null
+            ),
+            parse(
+                "maxspeed:backward" to "30",
+                "maxspeed:lanes:backward" to "20|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed not equal to maximum value in lanes_backward is invalid`() {
+        assertEquals(
+            maxspeedNoConditionsOrVehicles(
+                MaxspeedAndType(Invalid, Invalid),
+                MaxspeedAndType(Invalid, Invalid),
+                null
+            ),
+            parse(
+                "maxspeed" to "30",
+                "maxspeed:lanes:backward" to "20|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_backward with empty lane and maxspeed_backward lower than a lane`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(Invalid, null))),
+                    null, null
+                ),
+                null
+            ),
+            parse(
+                "maxspeed:backward" to "30",
+                "maxspeed:lanes:backward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_backward with empty lane and maxspeed lower than a lane`() {
+        assertEquals(
+            maxspeedNoConditionsOrVehicles(
+                MaxspeedAndType(MaxSpeedSign(Kmh(30)), null),
+                MaxspeedAndType(Invalid, null),
+                null
+            ),
+            parse(
+                "maxspeed" to "30",
+                "maxspeed:lanes:backward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_backward with empty lane and maxspeed_backward higher than any lane`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(50)), null))),
+                    null, null
+                ),
+                null
+            ),
+            parse(
+                "maxspeed:backward" to "50",
+                "maxspeed:lanes:backward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `maxspeed_lanes_backward with empty lane and maxspeed higher than any lane is valid`() {
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(50)), null, null),
+            parse(
+                "maxspeed" to "50",
+                "maxspeed:lanes:backward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `over-defined maxspeed is invalid, even with lanes backward`() {
+        assertEquals(
+            bareMaxspeedBothDirections(Invalid, Invalid, null),
+            parse(
+                "maxspeed" to "50",
+                "maxspeed:backward" to "60",
+                "maxspeed:lanes:backward" to "|40"
+            )
+        )
+    }
+
+    @Test fun `backward - lanes maxspeed tagged but no maxspeed set, take maximum from lanes`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(
+                null,
+                AllSpeedInformation(
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null))),
+                    null, null
+                ),
+                null
+            ),
+            parse("maxspeed:lanes:backward" to "20|40")
+        )
+    }
+
     /* ------------------------------------------------------------------------------------------ */
     /* ------------------------------ maxspeed:forward ------------------------------------------ */
     /* ------------------------------------------------------------------------------------------ */
@@ -3169,6 +3484,6 @@ private fun maxspeedBothDirectionsNoVehicles(
 private fun maxspeedNoConditionsOrVehicles(forward: MaxspeedAndType?, backward: MaxspeedAndType?, wholeRoadType: MaxSpeedAnswer?) =
     ForwardAndBackwardAllSpeedInformation(
         AllSpeedInformation(mapOf(null to mapOf(NoCondition to forward)), null, null),
-        AllSpeedInformation(mapOf(null to mapOf(NoCondition to backward.takeIf { it != null })), null, null),
+        AllSpeedInformation(mapOf(null to mapOf(NoCondition to backward)), null, null),
         wholeRoadType
     )
