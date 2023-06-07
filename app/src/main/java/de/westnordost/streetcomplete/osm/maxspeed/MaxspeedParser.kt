@@ -40,11 +40,7 @@ fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, count
         return null
     }
 
-    return ForwardAndBackwardAllSpeedInformation(
-        allSpeedForward,
-        allSpeedBackward,
-        wholeRoadType
-    )
+    return ForwardAndBackwardAllSpeedInformation(allSpeedForward, allSpeedBackward, wholeRoadType)
 }
 
 /** Combines directions of advisory speeds, returns null if there is no tagging or if the
@@ -110,9 +106,9 @@ private fun isVariableLimit(tags: Map<String, String>, direction: Direction): Bo
 
 private fun createVehicleConditionalMap(tags: Map<String, String>, countryInfo: CountryInfo): Map<String?, ForwardAndBackwardConditionalMaxspeed?>? {
     val vehicleMap = mutableMapOf<String?, ForwardAndBackwardConditionalMaxspeed?>()
-    (setOf(null) + VEHICLE_TYPES).forEach { v ->
-        val m = createForwardAndBackwardConditionalMaxspeed(tags, countryInfo, v)
-        vehicleMap[v] = ForwardAndBackwardConditionalMaxspeed(m.forward, m.backward)
+    (setOf(null) + VEHICLE_TYPES).forEach { veh ->
+        val m = createForwardAndBackwardConditionalMaxspeed(tags, countryInfo, veh)
+        vehicleMap[veh] = ForwardAndBackwardConditionalMaxspeed(m.forward, m.backward)
     }
     if (vehicleMap.isEmpty()) return null
     return vehicleMap
@@ -190,14 +186,11 @@ fun createConditionalMaxspeed(tags: Map<String, String>, direction: Direction, v
 /** Combines two conditional maxspeed maps, setting any to invalid where the values for the
  *  conditions are not equal. */
 private fun combineConditionalMaxspeedMaps(a: Map<Condition, MaxspeedAndType>?, b: Map<Condition, MaxspeedAndType>?): Map<Condition, MaxspeedAndType>? {
-    if (a == null) {
-        return b
-    } else if (b == null) {
-        return a
-    }
-    // plus prefers the elements on the right, so these are different if there is a clash of values
-    else if (a + b == b + a) {
-        return a + b
+    when {
+        a == null -> return b
+        b == null -> return a
+        // plus prefers the elements on the right, so these are different if there is a clash of values
+        a + b == b + a -> return a + b
     }
 
     val newMap = mutableMapOf<Condition, MaxspeedAndType>()
@@ -205,15 +198,15 @@ private fun combineConditionalMaxspeedMaps(a: Map<Condition, MaxspeedAndType>?, 
     // Any mismatching values get changed to Invalid
     // Reason: it seems that someone wanted to set a different speed e.g. when it's wet, so we
     // want to indicate that there 'should' be a value here, rather than just returning null
-    a.forEach { (k, v) ->
-        if (b.keys.contains(k) && b[k] != v) {
+    a!!.forEach { (k, v) ->
+        if (b!!.keys.contains(k) && b[k] != v) {
             newMap[k] = MaxspeedAndType(Invalid, Invalid)
         } else {
             newMap[k] = v
         }
     }
     // plus prefers values on the right, so the invalid values replace anything in b
-    return b + newMap
+    return b!! + newMap
 }
 
 /** Creates a combined set of MaxspeedAndType for forwards and backwards. If there is any over-

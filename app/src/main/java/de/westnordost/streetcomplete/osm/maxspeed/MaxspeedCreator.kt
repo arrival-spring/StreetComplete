@@ -89,7 +89,7 @@ private fun AllSpeedInformation?.applyTo(tags: Tags, direction: Direction) {
 
     // Remove maxspeed tagging for any vehicles not specified
     (setOf(null) + VEHICLE_TYPES).forEach {
-        if (this.vehicles?.contains(it) == false || this.vehicles == null) {
+        if (this.vehicles == null || !this.vehicles.contains(it)) {
             tags.removeMaxspeedTagging(direction, it, null)
             tags.removeMaxspeedTagging(direction, it, "conditional")
             tags.removeMaxspeedTypeTagging(direction, it, null)
@@ -293,10 +293,9 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
 
 private fun Tags.removeSpeedIfMoreThan(removableTag: String, comparedTo: MaxSpeedAnswer?, removableTagIsLanes: Boolean = false) {
     if (this[removableTag] == null) return
-    val removableTagMaxspeed = if (removableTagIsLanes) {
-        getHighestLaneSpeed(this[removableTag]!!)
-    } else {
-        createExplicitMaxspeed(this[removableTag])
+    val removableTagMaxspeed = when {
+        removableTagIsLanes -> getHighestLaneSpeed(this[removableTag]!!)
+        else -> createExplicitMaxspeed(this[removableTag])
     }
     when {
         removableTagMaxspeed !is MaxSpeedSign -> return

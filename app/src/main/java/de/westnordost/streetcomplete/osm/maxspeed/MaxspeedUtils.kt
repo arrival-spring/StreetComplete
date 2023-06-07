@@ -2,7 +2,8 @@ package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.CountryInfos
-import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
+import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.KILOMETERS_PER_HOUR
+import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.MILES_PER_HOUR
 import de.westnordost.streetcomplete.osm.lit.createLitStatus
 import de.westnordost.streetcomplete.osm.maxspeed.Inequality.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.osm.opening_hours.parser.toOpeningHoursRules
@@ -85,9 +86,9 @@ val CONDITIONAL_VALUE_TAG_SYNONYMS = mapOf(
 
 // source:maxspeed sometimes has a suffix of vehicle type
 private val implicitRegex = Regex("([A-Z]+-?[A-Z]*):(.+?)(:.+)?\$")
-private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?([0-9]+)")
+private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?(\\d+)")
 private val livingStreetRegex = Regex("([A-Z-]+-?[A-Z]*):(?:living_street)?")
-private val mphRegex = Regex("([0-9]+) mph")
+private val mphRegex = Regex("(\\d+) mph")
 private val conditionalRegex = Regex("(?:(\\d+(?: mph)?) ?@ ?(\\((?:[^)]+)\\)|(?:[^;]+))(?:; )?)+?")
 private val weightRegex = Regex("(?:max)?weight(?:rating)? ?([<>]=?) ?(\\d+\\.?\\d* ?(?:t|st|lbs|kg)?)")
 private val flashingRegex = Regex("[\"']?(when[ _])?(lights?[ _])?flashing([ _]lights?)?[\"']?")
@@ -233,8 +234,8 @@ fun getZoneMaxspeed(value: String, countryInfo: CountryInfo): MaxSpeedZone? {
     val speedUnit = countryInfo.speedUnits.first()
     if (zoneSpeed != null) {
         val speed = when (speedUnit) {
-            SpeedMeasurementUnit.MILES_PER_HOUR -> Mph(zoneSpeed)
-            SpeedMeasurementUnit.KILOMETERS_PER_HOUR -> Kmh(zoneSpeed)
+            MILES_PER_HOUR -> Mph(zoneSpeed)
+            KILOMETERS_PER_HOUR -> Kmh(zoneSpeed)
         }
         return MaxSpeedZone(speed, countryCode, "zone$zoneSpeed")
     }
@@ -325,7 +326,7 @@ fun guessMaxspeedInKmh(tags: Map<String, String>, countryInfos: CountryInfos? = 
             val zoneSpeed = matchResult.groupValues[2].toFloatOrNull()
             val countryCode = matchResult.groupValues[1]
             val isMilesPerHour = countryInfos?.get(listOf(countryCode))?.speedUnits?.first()?.let {
-                it == SpeedMeasurementUnit.MILES_PER_HOUR
+                it == MILES_PER_HOUR
             }
             if (zoneSpeed != null) {
                 return if (isMilesPerHour == true) zoneSpeed * 1.609344f else zoneSpeed
