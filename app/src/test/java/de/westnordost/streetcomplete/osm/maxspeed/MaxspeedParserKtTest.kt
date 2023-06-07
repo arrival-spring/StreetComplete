@@ -2723,6 +2723,135 @@ class MaxspeedParserKtTest {
         )
     }
 
+    @Test fun `parse maxweight conditions`() {
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(3.5), MORE_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweight>3.5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(5.0), LESS_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweight<5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(7.5), MORE_THAN_OR_EQUAL) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweight>=7.5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(10.0), LESS_THAN_OR_EQUAL) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweight<=10")
+        )
+    }
+
+    @Test fun `parse weightrating conditions`() {
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(3.5), MORE_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ weightrating>3.5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(5.0), LESS_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ weightrating<5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(7.5), MORE_THAN_OR_EQUAL) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ weightrating>=7.5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(10.0), LESS_THAN_OR_EQUAL) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ weightrating<=10")
+        )
+    }
+
+    @Test fun `parse maxweightrating conditions`() {
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(3.5), MORE_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweightrating>3.5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(5.0), LESS_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweightrating<5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(7.5), MORE_THAN_OR_EQUAL) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweightrating>=7.5")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(
+                    WeightAndComparison(MetricTons(10.0), LESS_THAN_OR_EQUAL) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
+                ),
+                null, null, null
+            ),
+            parse("maxspeed:conditional" to "40 @ maxweightrating<=10")
+        )
+    }
+
     @Test fun `conditional maxspeed with multiple conditions`() {
         assertEquals(
             maxspeedBothDirectionsNoVehicles(
@@ -2826,6 +2955,20 @@ class MaxspeedParserKtTest {
     @Test fun `parse other conditional tags as conditions`() {
         assertEquals(
             maxspeedBothDirectionsNoVehicles(
+                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:children_present" to "40")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(Flashing to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:flashing" to "40")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
                 mapOf(Night to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
@@ -2844,13 +2987,6 @@ class MaxspeedParserKtTest {
                 null, null, null
             ),
             parse("maxspeed:wet" to "40")
-        )
-        assertEquals(
-            maxspeedBothDirectionsNoVehicles(
-                mapOf(ChildrenPresent to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
-                null, null, null
-            ),
-            parse("maxspeed:children_present" to "40")
         )
     }
 

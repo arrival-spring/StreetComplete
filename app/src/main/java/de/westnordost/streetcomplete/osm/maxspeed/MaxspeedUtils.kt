@@ -29,6 +29,8 @@ val MAXSPEED_TYPE_KEYS = setOf(
 ) + MAXSPEED_TYPE_KEYS_EXCEPT_SOURCE
 
 val CONDITIONAL_MAXSPEED_TAGS = setOf(
+    "maxspeed:children_present",
+    "maxspeed:flashing",
     "maxspeed:night",
     "maxspeed:seasonal:winter",
     "maxspeed:wet"
@@ -74,10 +76,11 @@ enum class Direction(val osmValue: String) {
 }
 
 val CONDITIONAL_VALUE_TAG_SYNONYMS = mapOf(
+    "maxspeed:children_present" to ChildrenPresent,
+    "maxspeed:flashing" to Flashing,
     "maxspeed:night" to Night,
     "maxspeed:seasonal:winter" to Winter, // TODO: remove if proposal is rejected
-    "maxspeed:wet" to Wet,
-    "maxspeed:children_present" to ChildrenPresent
+    "maxspeed:wet" to Wet
 )
 
 // source:maxspeed sometimes has a suffix of vehicle type
@@ -86,7 +89,7 @@ private val zoneRegex = Regex("([A-Z-]+-?[A-Z]*):(?:zone)?:?([0-9]+)")
 private val livingStreetRegex = Regex("([A-Z-]+-?[A-Z]*):(?:living_street)?")
 private val mphRegex = Regex("([0-9]+) mph")
 private val conditionalRegex = Regex("(?:(\\d+(?: mph)?) ?@ ?(\\((?:[^)]+)\\)|(?:[^;]+))(?:; )?)+?")
-private val weightRegex = Regex("weight ?([<>]=?) ?(\\d+\\.?\\d* ?(?:t|st|lbs|kg)?)")
+private val weightRegex = Regex("(?:max)?weight(?:rating)? ?([<>]=?) ?(\\d+\\.?\\d* ?(?:t|st|lbs|kg)?)")
 private val flashingRegex = Regex("[\"']?(when[ _])?(lights?[ _])?flashing([ _]lights?)?[\"']?")
 private val childrenPresentRegex = Regex("[\"']?(when[ _]?)?children[ _](are[ _])?present[\"']?")
 
@@ -133,18 +136,32 @@ fun getConditionalMaxspeed(value: String?): Map<Condition, MaxSpeedAnswer>? {
     return conditions
 }
 
+fun getConditionalMaxspeedWithOriginalTags(value: String?): Map<Condition, String>? {
+    if (value == null) return null
+    val matchResults = conditionalRegex.findAll(value)
+    val conditions = mutableMapOf<Condition, String>()
+    for (matchResult in matchResults) {
+        val speed = createExplicitMaxspeed(matchResult.groupValues[1])
+        val condition = getCondition(matchResult.groupValues[2].removePrefix("(").removeSuffix(")"))
+        if (speed != null && speed !is Invalid && condition != null) {
+            conditions[condition] = matchResult.groupValues[0]
+        }
+    }
+    return conditions
+}
+
 private fun getCondition(condition: String?): Condition? {
     if (condition == null) return null
     val conditionAsOpeningHours = condition.toOpeningHoursRules()
     return when {
+        isChildrenPresent(condition) -> ChildrenPresent
+        isFlashing(condition) -> Flashing
+        isNightCondition(condition) -> Night
         condition == "snow" -> Snow
         condition == "wet" -> Wet
-        isFlashing(condition) -> Flashing
-        isChildrenPresent(condition) -> ChildrenPresent
         condition == "winter" -> Winter
-        isNightCondition(condition) -> Night
-        condition.startsWith("weight") -> getWeightAndComparison(condition)
-        conditionAsOpeningHours != null -> TimeCondition(condition.toOpeningHoursRules()!!)
+        isValidWeightCondition(condition) -> getWeightAndComparison(condition)
+        conditionAsOpeningHours != null -> TimeCondition(conditionAsOpeningHours)
         else -> null
     }
 }
@@ -166,6 +183,11 @@ private fun isNightCondition(condition: String?): Boolean {
         "dusk-dawn" -> true
         else -> false
     }
+}
+
+private fun isValidWeightCondition(value: String?): Boolean {
+    if (value == null) return false
+    return weightRegex.matchEntire(value) != null
 }
 
 private fun getWeightAndComparison(value: String?): WeightAndComparison? {

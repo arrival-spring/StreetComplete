@@ -3120,6 +3120,45 @@ class MaxspeedCreatorKtTest {
         )
     }
 
+    @Test fun `apply conditional maxspeed for weight to existing weight condition`() {
+        verifyAnswer(
+            mapOf("maxspeed:conditional" to "40 @ weight>10"),
+            maxspeedBothDirections(
+                mapOf(null to mapOf(
+                    WeightAndComparison(MetricTons(10.0), MORE_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(50)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:conditional", "40 @ weight>10", "50 @ weight>10")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:conditional" to "40 @ weightrating>10"),
+            maxspeedBothDirections(
+                mapOf(null to mapOf(
+                    WeightAndComparison(MetricTons(10.0), MORE_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(50)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:conditional", "40 @ weightrating>10", "50 @ weightrating>10")
+            )
+        )
+        verifyAnswer(
+            mapOf("maxspeed:conditional" to "40 @ maxweightrating>10"),
+            maxspeedBothDirections(
+                mapOf(null to mapOf(
+                    WeightAndComparison(MetricTons(10.0), MORE_THAN) to
+                        MaxspeedAndType(MaxSpeedSign(Kmh(50)), null))
+                )
+            ),
+            arrayOf(
+                StringMapEntryModify("maxspeed:conditional", "40 @ maxweightrating>10", "50 @ maxweightrating>10")
+            )
+        )
+    }
+
     @Test fun `apply maxspeed with multiple conditions`() {
         verifyAnswer(
             mapOf(),

@@ -145,6 +145,7 @@ private fun Map<Condition, MaxspeedAndType?>.applyTo(tags: Tags, direction: Dire
     // Don't change the value if nothing has changed
     val previousConditional = createConditionalMaxspeed(tags, direction, vehicleType)
     if (this == previousConditional) return
+    val originalConditionalTags = getConditionalMaxspeedWithOriginalTags(tags[conditionalKey])
 
     // Be consistent throughout with use of brackets
     val useBrackets = this.keys.any { it.needsBrackets() }
@@ -152,10 +153,8 @@ private fun Map<Condition, MaxspeedAndType?>.applyTo(tags: Tags, direction: Dire
     this.forEach {
         when (it.key) {
             NoCondition -> it.value.applyTo(tags, direction, vehicleType)
-            else -> {
-                val osmValue = it.value?.explicit?.toSpeedOsmValue() ?: return@forEach
-                if (useBrackets) conditionalOsmValues.add("$osmValue @ (${it.key.toOsmValue()})")
-                else conditionalOsmValues.add("$osmValue @ ${it.key.toOsmValue()}")
+            else -> getConditionalTagging(originalConditionalTags, it, useBrackets)?.let { tag ->
+                conditionalOsmValues.add(tag)
             }
         }
     }
@@ -170,6 +169,26 @@ private fun Map<Condition, MaxspeedAndType?>.applyTo(tags: Tags, direction: Dire
 
     // TODO: remove if proposal is rejected
     CONDITIONAL_MAXSPEED_TAGS.forEach { tags.remove("$it$veh$direction") }
+}
+
+private fun getConditionalTagging(originalConditionalTags: Map<Condition, String>?, conditionAndSpeed: Map.Entry<Condition, MaxspeedAndType?>, useBrackets: Boolean): String? {
+    val speedOsmValue = conditionAndSpeed.value?.explicit?.toSpeedOsmValue() ?: return null
+    val conditionOsmValue = when (conditionAndSpeed.key) {
+        is WeightAndComparison -> {
+            val previousConditionTag = originalConditionalTags?.get(conditionAndSpeed.key)
+            // Preserve previous use of specific weight type
+            when {
+                previousConditionTag?.contains("maxweightrating") == true ->
+                    conditionAndSpeed.key.toOsmValue().replace("weight", "maxweightrating")
+                previousConditionTag?.contains("weightrating") == true ->
+                    conditionAndSpeed.key.toOsmValue().replace("weight", "weightrating")
+                else -> conditionAndSpeed.key.toOsmValue()
+            }
+        }
+        else -> conditionAndSpeed.key.toOsmValue()
+    }
+    return if (useBrackets) "$speedOsmValue @ ($conditionOsmValue)"
+    else "$speedOsmValue @ $conditionOsmValue"
 }
 
 private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, vehicleType: String? = null) {
@@ -210,10 +229,9 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
         isSignedZone -> explicit?.toTypeOsmValue()
         else -> {
             // If previous type had vehicle suffix then keep that
-            if (getVehicleFromMaxspeedType(previousTypeOsmValue) == null) {
-                type?.toTypeOsmValue()
-            } else {
-                "${type?.toTypeOsmValue()}$veh"
+            when (getVehicleFromMaxspeedType(previousTypeOsmValue)) {
+                null -> type?.toTypeOsmValue()
+                else -> "${type?.toTypeOsmValue()}$veh"
             }
         }
     }
@@ -229,10 +247,9 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
     // If there is no type or type has not changed we should still clean up the tagging
     if (typeOsmValue == null || typeOsmValue == previousTypeOsmValue) {
         tags.removeMaxspeedTypeTagging(direction, vehicleType, null)
-        if (typeOsmValue != null) {
-            tags[typeKey] = typeOsmValue
-        } else if (previousTypeOsmValue != null) {
-            tags[typeKey] = previousTypeOsmValue
+        when {
+            typeOsmValue != null -> tags[typeKey] = typeOsmValue
+            previousTypeOsmValue != null -> tags[typeKey] = previousTypeOsmValue
         }
     }
 
@@ -254,7 +271,6 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
         // If user was shown that it was a school zone and selected something else, remove school zone tag
         // Checking if it's a living street because user was also shown it as a school zone if there was
         // no type tagged but it was a living street
-        // TODO do we want to keep vehicle type check in here?
         if (previousTypeOsmValue == null && !isLivingStreet(tags) && tags["hazard"] == "school_zone" && vehicleType == null) {
             tags.remove("hazard")
         }
