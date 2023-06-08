@@ -34,7 +34,9 @@ val CONDITIONAL_MAXSPEED_TAGS = setOf(
     "maxspeed:flashing",
     "maxspeed:night",
     "maxspeed:seasonal:winter",
-    "maxspeed:wet"
+    "maxspeed:summer",
+    "maxspeed:wet",
+    "maxspeed:winter"
 )
 
 // Taken fom "access" wiki page
@@ -80,8 +82,11 @@ val CONDITIONAL_VALUE_TAG_SYNONYMS = mapOf(
     "maxspeed:children_present" to ChildrenPresent,
     "maxspeed:flashing" to Flashing,
     "maxspeed:night" to Night,
+    "maxspeed:seasonal:summer" to Summer,
     "maxspeed:seasonal:winter" to Winter, // TODO: remove if proposal is rejected
-    "maxspeed:wet" to Wet
+    "maxspeed:summer" to Summer,
+    "maxspeed:wet" to Wet,
+    "maxspeed:winter" to Winter
 )
 
 // source:maxspeed sometimes has a suffix of vehicle type

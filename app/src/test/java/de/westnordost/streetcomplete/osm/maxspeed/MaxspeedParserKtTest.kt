@@ -2976,6 +2976,13 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedBothDirectionsNoVehicles(
+                mapOf(Summer to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:seasonal:summer" to "40")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
                 mapOf(Winter to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
@@ -2983,10 +2990,24 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedBothDirectionsNoVehicles(
+                mapOf(Summer to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:summer" to "40")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
                 mapOf(Wet to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
                 null, null, null
             ),
             parse("maxspeed:wet" to "40")
+        )
+        assertEquals(
+            maxspeedBothDirectionsNoVehicles(
+                mapOf(Winter to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)),
+                null, null, null
+            ),
+            parse("maxspeed:winter" to "40")
         )
     }
 
