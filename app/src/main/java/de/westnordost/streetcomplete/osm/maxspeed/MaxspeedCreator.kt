@@ -1,6 +1,9 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.osm.Tags
+import de.westnordost.streetcomplete.osm.bicycle_boulevard.BicycleBoulevard
+import de.westnordost.streetcomplete.osm.bicycle_boulevard.applyTo
+import de.westnordost.streetcomplete.osm.bicycle_boulevard.getBicycleBoulevardKey
 import de.westnordost.streetcomplete.osm.expandDirections
 import de.westnordost.streetcomplete.osm.hasCheckDateForKey
 import de.westnordost.streetcomplete.osm.lit.applyTo
@@ -11,7 +14,7 @@ import de.westnordost.streetcomplete.osm.mergeDirections
 import de.westnordost.streetcomplete.osm.updateCheckDateForKey
 import de.westnordost.streetcomplete.util.ktx.toYesNo
 
-fun ForwardAndBackwardAllSpeedInformation.applyTo(tags: Tags) {
+fun ForwardAndBackwardAllSpeedInformation.applyTo(tags: Tags, countryCode: String) {
     if (forward == null && backward == null && wholeRoadType == null) return
     // We want to use the same type key everywhere, but we can't use zone:traffic or zone:maxspeed
     // if any of the types is "sign", so need to check that here
@@ -60,6 +63,18 @@ fun ForwardAndBackwardAllSpeedInformation.applyTo(tags: Tags) {
         }
     }
 
+    if (wholeRoadType is BicycleBoulevardType) {
+        val typeKeyForward = getTypeKey(tags, null, ":forward")
+        val typeKeyBackward = getTypeKey(tags, null, ":backward")
+        if (isSchoolZone(tags) || forward?.vehicles?.get(null)?.get(NoCondition)?.explicit != null) {
+            tags[typeKeyForward] = "$countryCode:${getBicycleBoulevardKey(tags, countryCode)}"
+        }
+        if (isSchoolZone(tags) || backward?.vehicles?.get(null)?.get(NoCondition)?.explicit != null) {
+            tags[typeKeyBackward] = "$countryCode:${getBicycleBoulevardKey(tags, countryCode)}"
+        }
+        BicycleBoulevard.YES.applyTo(tags, countryCode)
+    }
+
     tags.mergeAllMaxspeedTags()
 
     if (wholeRoadType is IsSchoolZone) {
@@ -74,6 +89,11 @@ fun ForwardAndBackwardAllSpeedInformation.applyTo(tags: Tags) {
     if (!tags.hasChanges || tags.hasCheckDateForKey("maxspeed")) {
         tags.updateCheckDateForKey("maxspeed")
     }
+
+    if (lit != createLitStatus(tags) ) {
+        lit?.applyTo(tags)
+    }
+    // TODO similar for dual carriageway
 }
 
 private fun AllSpeedInformation?.applyTo(tags: Tags, direction: Direction) {
@@ -265,7 +285,6 @@ private fun MaxspeedAndType?.applyTo(tags: Tags, direction: Direction = BOTH, ve
         when {
             isSignedZone -> tags[signedZoneKey] = "sign"
             type is JustSign -> tags.remove("maxspeed$postfix:signed")
-            type is ImplicitMaxSpeed && type.lit != createLitStatus(tags) -> type.lit?.applyTo(tags)
         }
 
         // If user was shown that it was a school zone and selected something else, remove school zone tag

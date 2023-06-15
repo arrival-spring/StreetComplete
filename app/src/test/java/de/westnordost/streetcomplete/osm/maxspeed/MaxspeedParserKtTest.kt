@@ -2,6 +2,7 @@ package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit
+import de.westnordost.streetcomplete.osm.lit.LitStatus
 import de.westnordost.streetcomplete.osm.lit.LitStatus.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.osm.maxspeed.Inequality.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.osm.maxspeed.RoadType.* // ktlint-disable no-unused-imports
@@ -251,11 +252,11 @@ class MaxspeedParserKtTest {
 
     @Test fun `maxspeed type in maxspeed tag`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("RU", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("RU", URBAN), null),
             parseWithRUCountryCode("maxspeed" to "RU:urban")
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("RU", RURAL, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("RU", RURAL), null),
             parseWithRUCountryCode("maxspeed" to "RU:rural")
         )
         assertEquals(
@@ -307,19 +308,19 @@ class MaxspeedParserKtTest {
 
     @Test fun `standard implicit maxspeed`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode("maxspeed:type" to "DE:urban")
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode("source:maxspeed" to "DE:urban")
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode("zone:maxspeed" to "DE:urban")
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode("zone:traffic" to "DE:urban")
         )
     }
@@ -329,14 +330,14 @@ class MaxspeedParserKtTest {
         on(countryInfoBEWAL.countryCode).thenReturn("BE-WAL")
 
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("BE-WAL", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("BE-WAL", URBAN), null),
             createForwardAndBackwardAllSpeedInformation(mapOf("maxspeed:type" to "BE-WAL:urban"), countryInfoBEWAL)
         )
 
         val countryInfoCAAB: CountryInfo = mock()
         on(countryInfoCAAB.countryCode).thenReturn("CA-AB")
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("CA-AB", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("CA-AB", URBAN), null),
             createForwardAndBackwardAllSpeedInformation(mapOf("maxspeed:type" to "CA-AB:urban"), countryInfoCAAB)
         )
     }
@@ -346,7 +347,7 @@ class MaxspeedParserKtTest {
             maxspeedBothDirections(
                 mapOf("hgv" to
                     mapOf(
-                        NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null))
+                        NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN))
                     )
                 ),
                 null, null, null
@@ -364,7 +365,7 @@ class MaxspeedParserKtTest {
 
     @Test fun `unsigned maxspeed with implicit type also tagged`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "maxspeed:type" to "DE:urban",
                 "maxspeed:signed" to "no"
@@ -374,21 +375,23 @@ class MaxspeedParserKtTest {
 
     @Test fun `unknown road type`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", UNKNOWN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", UNKNOWN), null),
             parseWithDECountryCode("maxspeed:type" to "DE:flubberway")
         )
     }
 
-    @Test fun `recognise lit tag for implicit types`() {
+    @Test fun `recognise lit tag`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_RESTRICTED, YES), null),
+            // ForwardAndBackwardAllSpeedInformation(null, null, null, YES, null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_RESTRICTED), null, YES),
             parseWithGBCountryCode(
                 "maxspeed:type" to "GB:nsl_restricted",
                 "lit" to "yes"
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_SINGLE, NO), null),
+            // ForwardAndBackwardAllSpeedInformation(null, null, null, NO, null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_SINGLE), null, NO),
             parseWithGBCountryCode(
                 "maxspeed:type" to "GB:nsl_single",
                 "lit" to "no"
@@ -398,10 +401,77 @@ class MaxspeedParserKtTest {
 
     @Test fun `invalid value for lit is null`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_RESTRICTED, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("GB", NSL_RESTRICTED), null, null),
             parseWithGBCountryCode(
                 "maxspeed:type" to "GB:nsl_restricted",
                 "lit" to "unknown"
+            )
+        )
+    }
+
+    @Test fun `recognise dual carriageway`() {
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, true),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "dual_carriageway" to "yes"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, false),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "dual_carriageway" to "no"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, true),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "carriageway" to "dual"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, false),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "carriageway" to "single"
+            )
+        )
+    }
+
+    @Test fun `mismatching carriageway tagging is treated as if not set`() {
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "dual_carriageway" to "yes",
+                "carriageway" to "single"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "dual_carriageway" to "no",
+                "carriageway" to "dual"
+            )
+        )
+    }
+
+    @Test fun `invalid carriageway tagging is treated as if not set`() {
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "dual_carriageway" to "something"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:rural",
+                "carriageway" to "unknown"
             )
         )
     }
@@ -460,28 +530,28 @@ class MaxspeedParserKtTest {
 
     @Test fun `duplicated type tag is valid`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "DE:urban",
                 "maxspeed:type" to "DE:urban"
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "DE:urban",
                 "zone:traffic" to "DE:urban"
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "maxspeed:type" to "DE:urban",
                 "zone:maxspeed" to "DE:urban"
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "DE:urban",
                 "maxspeed:type" to "DE:urban",
@@ -489,7 +559,7 @@ class MaxspeedParserKtTest {
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "DE:urban",
                 "zone:maxspeed" to "DE:urban",
@@ -528,21 +598,21 @@ class MaxspeedParserKtTest {
 
     @Test fun `source_maxspeed unknown value and other valid type tag is valid`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "survey",
                 "maxspeed:type" to "DE:urban"
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "survey",
                 "zone:maxspeed" to "DE:urban"
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "survey",
                 "zone:traffic" to "DE:urban"
@@ -552,7 +622,7 @@ class MaxspeedParserKtTest {
 
     @Test fun `source_maxspeed unknown value and other duplicate valid type tags is valid`() {
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "survey",
                 "maxspeed:type" to "DE:urban",
@@ -560,7 +630,7 @@ class MaxspeedParserKtTest {
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "survey",
                 "zone:maxspeed" to "DE:urban",
@@ -568,7 +638,7 @@ class MaxspeedParserKtTest {
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "survey",
                 "zone:traffic" to "DE:urban",
@@ -576,7 +646,7 @@ class MaxspeedParserKtTest {
             )
         )
         assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN, null), null),
+            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", URBAN), null),
             parseWithDECountryCode(
                 "source:maxspeed" to "survey",
                 "maxspeed:type" to "DE:urban",
@@ -663,6 +733,59 @@ class MaxspeedParserKtTest {
             parseWithDECountryCode(
                 "highway" to "living_street",
                 "maxspeed:type" to "DE:living_street",
+                "maxspeed" to "walk"
+            )
+        )
+    }
+
+    /* -------------------------------------- bicycle boulevard --------------------------------- */
+
+    @Test fun `bicycle boulevard type`() {
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(null, null, BicycleBoulevardType(null)),
+            parse("cyclestreet" to "yes")
+        )
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(null, null, BicycleBoulevardType(null)),
+            parse(
+                "bicycle_road" to "yes"
+            )
+        )
+        assertEquals(
+            ForwardAndBackwardAllSpeedInformation(null, null, BicycleBoulevardType(null)),
+            parse(
+                "bicycle_road" to "yes",
+                "source:maxspeed" to "survey"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(null, BicycleBoulevardType("DE"), BicycleBoulevardType("DE")),
+            parseWithDECountryCode(
+                "maxspeed:type" to "DE:bicycle_road"
+            )
+        )
+    }
+
+    @Test fun `bicycle boulevard with explicit speed limit`() {
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(20)), null, BicycleBoulevardType(null)),
+            parse(
+                "bicycle_road" to "yes",
+                "maxspeed" to "20"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(MaxSpeedSign(Kmh(20)), null, BicycleBoulevardType(null)),
+            parse(
+                "cyclestreet" to "yes",
+                "maxspeed" to "20"
+            )
+        )
+        assertEquals(
+            bareMaxspeedBothDirections(WalkMaxSpeed, BicycleBoulevardType("DE"), BicycleBoulevardType(null)),
+            parseWithDECountryCode(
+                "bicycle_road" to "yes",
+                "maxspeed:type" to "DE:bicycle_road",
                 "maxspeed" to "walk"
             )
         )
@@ -1332,7 +1455,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             ForwardAndBackwardAllSpeedInformation(
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null, null
@@ -1342,7 +1465,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             ForwardAndBackwardAllSpeedInformation(
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null, null
@@ -1352,7 +1475,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             ForwardAndBackwardAllSpeedInformation(
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null, null
@@ -1362,7 +1485,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             ForwardAndBackwardAllSpeedInformation(
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null, null
@@ -1431,7 +1554,7 @@ class MaxspeedParserKtTest {
             ForwardAndBackwardAllSpeedInformation(
                 AllSpeedInformation(
                     mapOf(null to mapOf(NoCondition to
-                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", URBAN, null))
+                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", URBAN))
                     )),
                     null, null
                 ),
@@ -1443,7 +1566,7 @@ class MaxspeedParserKtTest {
             ForwardAndBackwardAllSpeedInformation(
                 AllSpeedInformation(
                     mapOf(null to mapOf(NoCondition to
-                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", RURAL, null))
+                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", RURAL))
                     )),
                     null, null
                 ),
@@ -1614,7 +1737,7 @@ class MaxspeedParserKtTest {
             ForwardAndBackwardAllSpeedInformation(
                 null,
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null
@@ -1625,7 +1748,7 @@ class MaxspeedParserKtTest {
             ForwardAndBackwardAllSpeedInformation(
                 null,
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null
@@ -1636,7 +1759,7 @@ class MaxspeedParserKtTest {
             ForwardAndBackwardAllSpeedInformation(
                 null,
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null
@@ -1647,7 +1770,7 @@ class MaxspeedParserKtTest {
             ForwardAndBackwardAllSpeedInformation(
                 null,
                 AllSpeedInformation(
-                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)))),
+                    mapOf(null to mapOf(NoCondition to MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)))),
                     null, null
                 ),
                 null
@@ -1721,7 +1844,7 @@ class MaxspeedParserKtTest {
                 null,
                 AllSpeedInformation(
                     mapOf(null to mapOf(NoCondition to
-                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", URBAN, null))
+                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", URBAN))
                     )),
                     null, null
                 ),
@@ -1734,7 +1857,7 @@ class MaxspeedParserKtTest {
                 null,
                 AllSpeedInformation(
                     mapOf(null to mapOf(NoCondition to
-                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", RURAL, null))
+                        MaxspeedAndType(null, ImplicitMaxSpeed("RU", RURAL))
                     )),
                     null, null
                 ),
@@ -1828,7 +1951,7 @@ class MaxspeedParserKtTest {
     @Test fun `invalid type in one direction, valid in the other`() {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)),
                 MaxspeedAndType(null, Invalid),
                 null
             ),
@@ -1840,7 +1963,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(null, Invalid),
-                MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(null, ImplicitMaxSpeed("DE", URBAN)),
                 null
             ),
             parseWithDECountryCode(
@@ -1992,7 +2115,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 null
             ),
             parseWithDECountryCode(
@@ -2004,7 +2127,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
                 null
             ),
@@ -2018,7 +2141,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 null
             ),
             parseWithGBCountryCode(
@@ -2030,7 +2153,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
                 null
             ),
@@ -2047,7 +2170,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 null
             ),
             parseWithDECountryCode(
@@ -2059,7 +2182,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
                 null
             ),
@@ -2073,7 +2196,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 null
             ),
             parseWithGBCountryCode(
@@ -2085,7 +2208,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
                 null
             ),
@@ -2102,7 +2225,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 null
             ),
             parseWithDECountryCode(
@@ -2114,7 +2237,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
                 null
             ),
@@ -2128,7 +2251,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 null
             ),
             parseWithGBCountryCode(
@@ -2140,7 +2263,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
                 null
             ),
@@ -2157,7 +2280,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 null
             ),
             parseWithDECountryCode(
@@ -2169,7 +2292,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
                 null
             ),
@@ -2183,7 +2306,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 null
             ),
             parseWithGBCountryCode(
@@ -2195,7 +2318,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
                 null
             ),
@@ -2212,7 +2335,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 null
             ),
             parseWithDECountryCode(
@@ -2224,7 +2347,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN, null)),
+                MaxspeedAndType(MaxSpeedSign(Kmh(60)), ImplicitMaxSpeed("DE", URBAN)),
                 MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign),
                 null
             ),
@@ -2238,7 +2361,7 @@ class MaxspeedParserKtTest {
         assertEquals(
             maxspeedNoConditionsOrVehicles(
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 null
             ),
             parseWithGBCountryCode(
@@ -2250,7 +2373,7 @@ class MaxspeedParserKtTest {
         )
         assertEquals(
             maxspeedNoConditionsOrVehicles(
-                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE, null)),
+                MaxspeedAndType(MaxSpeedSign(Mph(60)), ImplicitMaxSpeed("GB", NSL_SINGLE)),
                 MaxspeedAndType(MaxSpeedSign(Mph(40)), JustSign),
                 null
             ),
@@ -3522,7 +3645,7 @@ class MaxspeedParserKtTest {
                 AllSpeedInformation(
                     mapOf(
                         null to mapOf(
-                            NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(100)), ImplicitMaxSpeed("DE", MOTORWAY, YES))
+                            NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(100)), ImplicitMaxSpeed("DE", MOTORWAY))
                         ),
                         "hgv" to mapOf(
                             NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(40)), JustSign)
@@ -3537,7 +3660,7 @@ class MaxspeedParserKtTest {
                 AllSpeedInformation(
                     mapOf(
                         null to mapOf(
-                            NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(100)), ImplicitMaxSpeed("DE", MOTORWAY, YES)),
+                            NoCondition to MaxspeedAndType(MaxSpeedSign(Kmh(100)), ImplicitMaxSpeed("DE", MOTORWAY)),
                             Wet to MaxspeedAndType(MaxSpeedSign(Kmh(40)), null)
                         ),
                         "hgv" to mapOf(
@@ -3554,7 +3677,7 @@ class MaxspeedParserKtTest {
                     AdvisorySpeedSign(Kmh(80)),
                     false
                 ),
-                null
+                null, YES, null
             ),
             parseWithDECountryCode(
                 "maxspeed" to "100",
@@ -3607,11 +3730,13 @@ private fun parseWithRUCountryCode(vararg tags: Pair<String, String>): ForwardAn
     return parseWithCountryInfo(tags, countryInfoRU)
 }
 
-private fun bareMaxspeedBothDirections(explicit: MaxSpeedAnswer?, type: MaxSpeedAnswer?, wholeRoadType: MaxSpeedAnswer?) =
+private fun bareMaxspeedBothDirections(explicit: MaxSpeedAnswer?, type: MaxSpeedAnswer?, wholeRoadType: MaxSpeedAnswer?, lit: LitStatus? = null, dualCarriageway: Boolean? = null) =
     ForwardAndBackwardAllSpeedInformation(
         AllSpeedInformation(mapOf(null to mapOf(NoCondition to MaxspeedAndType(explicit, type))), null, null),
         AllSpeedInformation(mapOf(null to mapOf(NoCondition to MaxspeedAndType(explicit, type))), null, null),
-        wholeRoadType
+        wholeRoadType,
+        lit,
+        dualCarriageway
     )
 
 private fun maxspeedBothDirections(

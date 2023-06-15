@@ -322,7 +322,7 @@ class AddMaxSpeedForm : AbstractOsmQuestForm<MaxSpeedAnswer>() {
     }
 
     private fun applyNoSignAnswer(roadType: RoadType, lit: LitStatus? = null) {
-        applyAnswer(ImplicitMaxSpeed(countryInfo.countryCode, roadType, lit))
+        applyAnswer(ImplicitMaxSpeed(countryInfo.countryCode, roadType))
     }
 
     companion object {

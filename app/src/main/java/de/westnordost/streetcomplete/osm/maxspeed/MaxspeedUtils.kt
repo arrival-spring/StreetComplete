@@ -4,7 +4,6 @@ import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.meta.CountryInfos
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.KILOMETERS_PER_HOUR
 import de.westnordost.streetcomplete.data.meta.SpeedMeasurementUnit.MILES_PER_HOUR
-import de.westnordost.streetcomplete.osm.lit.createLitStatus
 import de.westnordost.streetcomplete.osm.maxspeed.Inequality.* // ktlint-disable no-unused-imports
 import de.westnordost.streetcomplete.osm.opening_hours.parser.toOpeningHoursRules
 import de.westnordost.streetcomplete.osm.weight.createWeight
@@ -98,6 +97,26 @@ private val conditionalRegex = Regex("(?:(\\d+(?: mph)?) ?@ ?(\\((?:[^)]+)\\)|(?
 private val weightRegex = Regex("(?:max)?weight(?:rating)? ?([<>]=?) ?(\\d+\\.?\\d* ?(?:t|st|lbs|kg)?)")
 private val flashingRegex = Regex("[\"']?(when[ _])?(lights?[ _])?flashing([ _]lights?)?[\"']?")
 private val childrenPresentRegex = Regex("[\"']?(when[ _]?)?children[ _](are[ _])?present[\"']?")
+
+fun isDualCarriageway(tags: Map<String, String>): Boolean? {
+    val dualCarriageway = when (tags["dual_carriageway"]) {
+        "yes" -> true
+        "no" -> false
+        else -> null
+    }
+    val carriagewayIsDual = when (tags["carriageway"]) {
+        "dual" -> true
+        "single" -> false
+        else -> null
+    }
+    return when {
+        dualCarriageway == null -> carriagewayIsDual
+        carriagewayIsDual == null -> dualCarriageway
+        // Treat mismatch as if it is not set
+        dualCarriageway != carriagewayIsDual -> null
+        else -> dualCarriageway
+    }
+}
 
 fun anyLanesSpeedIsEmpty(value: String): Boolean {
     return value.split("|").contains("")
@@ -216,13 +235,13 @@ fun isImplicitMaxspeed(value: String): Boolean {
     return implicitRegex.matchEntire(value) != null
 }
 
-fun getImplicitMaxspeed(value: String, tags: Map<String, String>): ImplicitMaxSpeed? {
+fun getImplicitMaxspeed(value: String): ImplicitMaxSpeed? {
     val matchResult = implicitRegex.matchEntire(value) ?: return null
     val typeSpeed = matchResult.groupValues[2]
     val countryCode = matchResult.groupValues[1]
     val roadType = RoadType.values().find { it.osmValue == typeSpeed } ?: RoadType.UNKNOWN
 
-    return ImplicitMaxSpeed(countryCode, roadType, createLitStatus(tags))
+    return ImplicitMaxSpeed(countryCode, roadType)
 }
 
 fun isZoneMaxspeed(value: String): Boolean {
@@ -247,7 +266,12 @@ fun getZoneMaxspeed(value: String, countryInfo: CountryInfo): MaxSpeedZone? {
     return null
 }
 
-fun isLivingStreetMaxspeed(value: String): Boolean {
+fun isBicycleBoulevardType(value: String): Boolean {
+    return getImplicitMaxspeed(value)?.roadType == RoadType.BICYCLE_ROAD
+        || getImplicitMaxspeed(value)?.roadType == RoadType.CYCLE_STREET
+}
+
+fun isLivingStreetType(value: String): Boolean {
     return livingStreetRegex.matchEntire(value) != null
 }
 

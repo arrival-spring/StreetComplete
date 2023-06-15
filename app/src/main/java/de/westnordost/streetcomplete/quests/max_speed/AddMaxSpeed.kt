@@ -63,7 +63,7 @@ class AddMaxSpeed : OsmFilterQuestType<MaxSpeedAnswer>() {
             is ImplicitMaxSpeed -> {
                 tags["maxspeed:type"] = answer.countryCode + ":" + answer.roadType.osmValue
                 // Lit is either already set or has been answered by the user, so this wouldn't change the value of the lit tag
-                answer.lit?.applyTo(tags)
+                // answer.lit?.applyTo(tags)
             }
             else -> throw IllegalArgumentException("Attempting to tag invalid maxspeed")
         }

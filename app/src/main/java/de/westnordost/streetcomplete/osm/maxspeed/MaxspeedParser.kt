@@ -1,15 +1,20 @@
 package de.westnordost.streetcomplete.osm.maxspeed
 
 import de.westnordost.streetcomplete.data.meta.CountryInfo
+import de.westnordost.streetcomplete.osm.bicycle_boulevard.BicycleBoulevard
+import de.westnordost.streetcomplete.osm.bicycle_boulevard.createBicycleBoulevard
+import de.westnordost.streetcomplete.osm.lit.createLitStatus
 import de.westnordost.streetcomplete.osm.maxspeed.Direction.* // ktlint-disable no-unused-imports
 import kotlin.math.roundToInt
 
 fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, countryInfo: CountryInfo): ForwardAndBackwardAllSpeedInformation? {
-    if (!hasAnyMaxspeedTagging(tags) && !isSchoolZone(tags) && !isLivingStreet(tags)) return null
+    val wholeRoadType = createWholeRoadType(tags, countryInfo)
+    if (!hasAnyMaxspeedTagging(tags) && wholeRoadType == null) return null
     val vehicleMap = createVehicleConditionalMap(tags, countryInfo)
     val advisory = createForwardAndBackwardAdvisorySpeedSign(tags)
     val variable = createForwardAndBackwardVariableLimit(tags)
-    val wholeRoadType = createWholeRoadType(tags, countryInfo)
+    val lit = createLitStatus(tags)
+    val dualCarriageway = isDualCarriageway(tags)
 
     var forwardVehicleMap = vehicleMap?.mapValues { (_, v) -> v?.forward }?.filterValues { !it.isNullOrEmpty() }
     if (forwardVehicleMap.isNullOrEmpty()) forwardVehicleMap = null
@@ -40,7 +45,7 @@ fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, count
         return null
     }
 
-    return ForwardAndBackwardAllSpeedInformation(allSpeedForward, allSpeedBackward, wholeRoadType)
+    return ForwardAndBackwardAllSpeedInformation(allSpeedForward, allSpeedBackward, wholeRoadType, lit, dualCarriageway)
 }
 
 /** Combines directions of advisory speeds, returns null if there is no tagging or if the
@@ -269,10 +274,19 @@ private fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: Countr
     var maxspeedType: MaxSpeedAnswer?
     val impliedMaxspeedValue: MaxSpeedAnswer?
 
-    val taggedMaxspeedType = createImplicitMaxspeed(tags["maxspeed:type$veh$direction"], tags, countryInfo)
-    val taggedSourceMaxspeed = createImplicitMaxspeed(tags["source:maxspeed$veh$direction"], tags, countryInfo)
-    val taggedZoneMaxspeed = createImplicitMaxspeed(tags["zone:maxspeed$veh$direction"], tags, countryInfo) // e.g. "DE:30", "DE:urban" etc.
-    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic$veh$direction"], tags, countryInfo) // e.g. "DE:urban", "DE:zone30" etc.
+    val taggedMaxspeedType = createImplicitMaxspeed(
+        tags["maxspeed:type$veh$direction"],
+        countryInfo
+    )
+    val taggedSourceMaxspeed = createImplicitMaxspeed(
+        tags["source:maxspeed$veh$direction"],
+        countryInfo
+    )
+    val taggedZoneMaxspeed = createImplicitMaxspeed(
+        tags["zone:maxspeed$veh$direction"],
+        countryInfo
+    ) // e.g. "DE:30", "DE:urban" etc.
+    val taggedZoneTraffic = createImplicitMaxspeed(tags["zone:traffic$veh$direction"], countryInfo) // e.g. "DE:urban", "DE:zone30" etc.
     val taggedMaxspeedSigned = tags["maxspeed$veh$direction:signed"] != "no"
 
     // Assume that invalid "source:maxspeed" means that it is actual "source", not type
@@ -303,7 +317,10 @@ private fun createMaxspeedAndType(tags: Map<String, String>, countryInfo: Countr
     // If maxspeed has a non-numerical value, see if it is valid type instead
     if (maxspeedValue == Invalid && taggedMaxspeed != null) {
         val maxspeedAsType = when {
-            isImplicitMaxspeed(taggedMaxspeed) -> createImplicitMaxspeed(taggedMaxspeed, tags, countryInfo)
+            isImplicitMaxspeed(taggedMaxspeed) -> createImplicitMaxspeed(
+                taggedMaxspeed,
+                countryInfo
+            )
             else -> null
         }
 
@@ -373,26 +390,31 @@ private fun getMaxspeedValueWhenLanesIsGiven(maxspeedValue: MaxSpeedAnswer?, lan
 private fun createWholeRoadType(tags: Map<String, String>, countryInfo: CountryInfo): MaxSpeedAnswer? {
     // Check for school zone first, because if there is a road that is both then if it was displayed
     // as a living street then there would be no way to change the tags to mark it as a school zone
-    val livingStreetAsType = createMaxspeedAndType(tags, countryInfo, BOTH, null)
-    val isLivingStreetAsType = livingStreetAsType?.type is LivingStreet
+    val wholeRoadSpeedAndType = createMaxspeedAndType(tags, countryInfo, BOTH, null)
+    val isLivingStreetAsType = wholeRoadSpeedAndType?.type is LivingStreet
+    val isBicycleBoulevard = createBicycleBoulevard(tags) == BicycleBoulevard.YES
+    val isBicycleBoulevardAsType = wholeRoadSpeedAndType?.type is BicycleBoulevardType
     return when {
         isSchoolZone(tags) -> IsSchoolZone
         isLivingStreet(tags) -> LivingStreet(null)
-        isLivingStreetAsType -> livingStreetAsType?.type
+        isLivingStreetAsType -> wholeRoadSpeedAndType!!.type
+        isBicycleBoulevard -> BicycleBoulevardType(null)
+        isBicycleBoulevardAsType -> wholeRoadSpeedAndType!!.type
         else -> null
     }
 }
 
 /** Create an ImplicitMaxspeed object for the given [value]. Needs all tags to determine if the way is lit */
-private fun createImplicitMaxspeed(value: String?, tags: Map<String, String>, countryInfo: CountryInfo): MaxSpeedAnswer? {
+private fun createImplicitMaxspeed(value: String?, countryInfo: CountryInfo): MaxSpeedAnswer? {
     return when {
         value == null -> null
         value == "sign" -> JustSign
         // Check for other implicit types first because the format is the same as implicit format
         getCountryCodeFromMaxspeedType(value) != countryInfo.countryCode -> Invalid
         isZoneMaxspeed(value) -> getZoneMaxspeed(value, countryInfo)
-        isLivingStreetMaxspeed(value) -> LivingStreet(getCountryCodeFromMaxspeedType(value))
-        isImplicitMaxspeed(value) -> getImplicitMaxspeed(value, tags)
+        isLivingStreetType(value) -> LivingStreet(getCountryCodeFromMaxspeedType(value))
+        isBicycleBoulevardType(value) -> BicycleBoulevardType(getCountryCodeFromMaxspeedType(value))
+        isImplicitMaxspeed(value) -> getImplicitMaxspeed(value)
         else -> Invalid
     }
 }
