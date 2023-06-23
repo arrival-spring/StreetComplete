@@ -409,73 +409,6 @@ class MaxspeedParserKtTest {
         )
     }
 
-    @Test fun `recognise dual carriageway`() {
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, true),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "dual_carriageway" to "yes"
-            )
-        )
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, false),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "dual_carriageway" to "no"
-            )
-        )
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, true),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "carriageway" to "dual"
-            )
-        )
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null, null, false),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "carriageway" to "single"
-            )
-        )
-    }
-
-    @Test fun `mismatching carriageway tagging is treated as if not set`() {
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "dual_carriageway" to "yes",
-                "carriageway" to "single"
-            )
-        )
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "dual_carriageway" to "no",
-                "carriageway" to "dual"
-            )
-        )
-    }
-
-    @Test fun `invalid carriageway tagging is treated as if not set`() {
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "dual_carriageway" to "something"
-            )
-        )
-        assertEquals(
-            bareMaxspeedBothDirections(null, ImplicitMaxSpeed("DE", RURAL), null),
-            parseWithDECountryCode(
-                "maxspeed:type" to "DE:rural",
-                "carriageway" to "unknown"
-            )
-        )
-    }
-
     @Test fun `maxspeed zone`() {
         assertEquals(
             bareMaxspeedBothDirections(MaxSpeedSign(Kmh(30)), MaxSpeedZone(Kmh(30), "DE", "zone30"), null),
@@ -3677,7 +3610,7 @@ class MaxspeedParserKtTest {
                     AdvisorySpeedSign(Kmh(80)),
                     false
                 ),
-                null, YES, null
+                null, YES
             ),
             parseWithDECountryCode(
                 "maxspeed" to "100",
@@ -3730,13 +3663,12 @@ private fun parseWithRUCountryCode(vararg tags: Pair<String, String>): ForwardAn
     return parseWithCountryInfo(tags, countryInfoRU)
 }
 
-private fun bareMaxspeedBothDirections(explicit: MaxSpeedAnswer?, type: MaxSpeedAnswer?, wholeRoadType: MaxSpeedAnswer?, lit: LitStatus? = null, dualCarriageway: Boolean? = null) =
+private fun bareMaxspeedBothDirections(explicit: MaxSpeedAnswer?, type: MaxSpeedAnswer?, wholeRoadType: MaxSpeedAnswer?, lit: LitStatus? = null) =
     ForwardAndBackwardAllSpeedInformation(
         AllSpeedInformation(mapOf(null to mapOf(NoCondition to MaxspeedAndType(explicit, type))), null, null),
         AllSpeedInformation(mapOf(null to mapOf(NoCondition to MaxspeedAndType(explicit, type))), null, null),
         wholeRoadType,
-        lit,
-        dualCarriageway
+        lit
     )
 
 private fun maxspeedBothDirections(

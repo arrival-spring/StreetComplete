@@ -6,8 +6,7 @@ data class ForwardAndBackwardAllSpeedInformation(
     val forward: AllSpeedInformation?,
     val backward: AllSpeedInformation?,
     val wholeRoadType: MaxSpeedAnswer? = null, // e.g. living street or school zone that is not linked to a vehicle
-    val lit: LitStatus? = null,
-    val dualCarriageway: Boolean? = null
+    val lit: LitStatus? = null
     )
 
 data class AllSpeedInformation(

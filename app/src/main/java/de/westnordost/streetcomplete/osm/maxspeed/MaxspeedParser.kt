@@ -14,7 +14,6 @@ fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, count
     val advisory = createForwardAndBackwardAdvisorySpeedSign(tags)
     val variable = createForwardAndBackwardVariableLimit(tags)
     val lit = createLitStatus(tags)
-    val dualCarriageway = isDualCarriageway(tags)
 
     var forwardVehicleMap = vehicleMap?.mapValues { (_, v) -> v?.forward }?.filterValues { !it.isNullOrEmpty() }
     if (forwardVehicleMap.isNullOrEmpty()) forwardVehicleMap = null
@@ -45,7 +44,7 @@ fun createForwardAndBackwardAllSpeedInformation(tags: Map<String, String>, count
         return null
     }
 
-    return ForwardAndBackwardAllSpeedInformation(allSpeedForward, allSpeedBackward, wholeRoadType, lit, dualCarriageway)
+    return ForwardAndBackwardAllSpeedInformation(allSpeedForward, allSpeedBackward, wholeRoadType, lit)
 }
 
 /** Combines directions of advisory speeds, returns null if there is no tagging or if the

@@ -93,7 +93,6 @@ fun ForwardAndBackwardAllSpeedInformation.applyTo(tags: Tags, countryCode: Strin
     if (lit != createLitStatus(tags) ) {
         lit?.applyTo(tags)
     }
-    // TODO similar for dual carriageway
 }
 
 private fun AllSpeedInformation?.applyTo(tags: Tags, direction: Direction) {

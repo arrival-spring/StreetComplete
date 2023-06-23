@@ -98,26 +98,6 @@ private val weightRegex = Regex("(?:max)?weight(?:rating)? ?([<>]=?) ?(\\d+\\.?\
 private val flashingRegex = Regex("[\"']?(when[ _])?(lights?[ _])?flashing([ _]lights?)?[\"']?")
 private val childrenPresentRegex = Regex("[\"']?(when[ _]?)?children[ _](are[ _])?present[\"']?")
 
-fun isDualCarriageway(tags: Map<String, String>): Boolean? {
-    val dualCarriageway = when (tags["dual_carriageway"]) {
-        "yes" -> true
-        "no" -> false
-        else -> null
-    }
-    val carriagewayIsDual = when (tags["carriageway"]) {
-        "dual" -> true
-        "single" -> false
-        else -> null
-    }
-    return when {
-        dualCarriageway == null -> carriagewayIsDual
-        carriagewayIsDual == null -> dualCarriageway
-        // Treat mismatch as if it is not set
-        dualCarriageway != carriagewayIsDual -> null
-        else -> dualCarriageway
-    }
-}
-
 fun anyLanesSpeedIsEmpty(value: String): Boolean {
     return value.split("|").contains("")
 }
