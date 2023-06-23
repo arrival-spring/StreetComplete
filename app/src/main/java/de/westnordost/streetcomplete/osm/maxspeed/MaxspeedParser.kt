@@ -422,7 +422,6 @@ private fun createImplicitMaxspeed(value: String?, countryInfo: CountryInfo): Ma
  *  Returns invalid if not in mph or a plain number (i.e. in km/h) */
 fun createExplicitMaxspeed(value: String?): MaxSpeedAnswer? {
     if (value == null) return null
-    // "walk" and "none" are values in "maxspeed", rather than "maxspeed:type"
     return when {
         value == "signals" -> null // Dealt with as variable maxspeed, treat as if maxspeed is not set
         maxspeedIsWalk(value) -> WalkMaxSpeed
